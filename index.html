@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="talk_files/libs/clipboard/clipboard.min.js"></script>
+<script src="talk_files/libs/quarto-html/tabby.min.js"></script>
+<script src="talk_files/libs/quarto-html/popper.min.js"></script>
+<script src="talk_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="talk_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="talk_files/libs/quarto-html/quarto-html.min.css" rel="stylesheet" data-mode="light">
+<link href="talk_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.1.189">
+
+  <title>Matrix Decomposition Package for Metabolomics</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="talk_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="talk_files/libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="talk_files/libs/revealjs/dist/theme/quarto.css" id="theme">
+  <link rel="stylesheet" href="styles.css">
+  <link href="talk_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="talk_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="talk_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="talk_files/libs/revealjs/plugin/reveal-chalkboard/font-awesome/css/all.css" rel="stylesheet">
+  <link href="talk_files/libs/revealjs/plugin/reveal-chalkboard/style.css" rel="stylesheet">
+  <link href="talk_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+
+  .callout {
+    margin-top: 1em;
+    margin-bottom: 1em;  
+    border-radius: .25rem;
+  }
+
+  .callout.callout-style-simple { 
+    padding: 0em 0.5em;
+    border-left: solid #acacac .3rem;
+    border-right: solid 1px silver;
+    border-top: solid 1px silver;
+    border-bottom: solid 1px silver;
+    display: flex;
+  }
+
+  .callout.callout-style-default {
+    border-left: solid #acacac .3rem;
+    border-right: solid 1px silver;
+    border-top: solid 1px silver;
+    border-bottom: solid 1px silver;
+  }
+
+  .callout .callout-body-container {
+    flex-grow: 1;
+  }
+
+  .callout.callout-style-simple .callout-body {
+    font-size: 1rem;
+    font-weight: 400;
+  }
+
+  .callout.callout-style-default .callout-body {
+    font-size: 0.9rem;
+    font-weight: 400;
+  }
+
+  .callout.callout-captioned.callout-style-simple .callout-body {
+    margin-top: 0.2em;
+  }
+
+  .callout:not(.callout-captioned) .callout-body {
+      display: flex;
+  }
+
+  .callout:not(.no-icon).callout-captioned.callout-style-simple .callout-content {
+    padding-left: 1.6em;
+  }
+
+  .callout.callout-captioned .callout-header {
+    padding-top: 0.2em;
+    margin-bottom: -0.2em;
+  }
+
+  .callout.callout-captioned .callout-caption  p {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+    
+  .callout.callout-captioned.callout-style-simple .callout-content  p {
+    margin-top: 0;
+  }
+
+  .callout.callout-captioned.callout-style-default .callout-content  p {
+    margin-top: 0.7em;
+  }
+
+  .callout.callout-style-simple div.callout-caption {
+    border-bottom: none;
+    font-size: .9rem;
+    font-weight: 600;
+    opacity: 75%;
+  }
+
+  .callout.callout-style-default  div.callout-caption {
+    border-bottom: none;
+    font-weight: 600;
+    opacity: 85%;
+    font-size: 0.9rem;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
+
+  .callout.callout-style-default div.callout-content {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
+
+  .callout.callout-style-simple .callout-icon::before {
+    height: 1rem;
+    width: 1rem;
+    display: inline-block;
+    content: "";
+    background-repeat: no-repeat;
+    background-size: 1rem 1rem;
+  }
+
+  .callout.callout-style-default .callout-icon::before {
+    height: 0.9rem;
+    width: 0.9rem;
+    display: inline-block;
+    content: "";
+    background-repeat: no-repeat;
+    background-size: 0.9rem 0.9rem;
+  }
+
+  .callout-caption {
+    display: flex
+  }
+    
+  .callout-icon::before {
+    margin-top: 1rem;
+    padding-right: .5rem;
+  }
+
+  .callout.no-icon::before {
+    display: none !important;
+  }
+
+  .callout.callout-captioned .callout-body > .callout-content > :last-child {
+    margin-bottom: 0.5rem;
+  }
+
+  .callout.callout-captioned .callout-icon::before {
+    margin-top: .5rem;
+    padding-right: .5rem;
+  }
+
+  .callout:not(.callout-captioned) .callout-icon::before {
+    margin-top: 1rem;
+    padding-right: .5rem;
+  }
+
+  /* Callout Types */
+
+  div.callout-note {
+    border-left-color: #4582ec !important;
+  }
+
+  div.callout-note .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAEU0lEQVRYCcVXTWhcVRQ+586kSUMMxkyaElstCto2SIhitS5Ek8xUKV2poatCcVHtUlFQk8mbaaziwpWgglJwVaquitBOfhQXFlqlzSJpFSpIYyXNjBNiTCck7x2/8/LeNDOZxDuEkgOXe++553zfefee+/OYLOXFk3+1LLrRdiO81yNqZ6K9cG0P3MeFaMIQjXssE8Z1JzLO9ls20MBZX7oG8w9GxB0goaPrW5aNMp1yOZIa7Wv6o2ykpLtmAPs/vrG14Z+6d4jpbSKuhdcSyq9wGMPXjonwmESXrriLzFGOdDBLB8Y6MNYBu0dRokSygMA/mrun8MGFN3behm6VVAwg4WR3i6FvYK1T7MHo9BK7ydH+1uurECoouk5MPRyVSBrBHMYwVobG2aOXM07sWrn5qgB60rc6mcwIDJtQrnrEr44kmy+UO9r0u9O5/YbkS9juQckLed3DyW2XV/qWBBB3ptvI8EUY3I9p/67OW+g967TNr3Sotn3IuVlfMLVnsBwH4fsnebJvyGm5GeIUA3jljERmrv49SizPYuq+z7c2H/jlGC+Ghhupn/hcapqmcudB9jwJ/3jvnvu6vu5lVzF1fXyZuZZ7U8nRmVzytvT+H3kilYvH09mLWrQdwFSsFEsxFVs5fK7A0g8gMZjbif4ACpKbjv7gNGaD8bUrlk8x+KRflttr22JEMRUbTUwwDQScyzPgedQHZT0xnx7ujw2jfVfExwYHwOsDTjLdJ2ebmeQIlJ7neo41s/DrsL3kl+W2lWvAga0tR3zueGr6GL78M3ifH0rGXrBC2aAR8uYcIA5gwV8zIE8onoh8u0Fca/ciF7j1uOzEnqcIm59sEXoGc0+z6+H45V1CvAvHcD7THztu669cnp+L0okAeIc6zjbM/24LgGM1gZk7jnRu1aQWoU9sfUOuhrmtaPIO3YY1KLLWZaEO5TKUbMY5zx8W9UJ6elpLwKXbsaZ4EFl7B4bMtDv0iRipKoDQT2sNQI9b1utXFdYisi+wzZ/ri/1m7QfDgEuvgUUEIJPq3DhX/5DWNqIXDOweC2wvIR90Oq3lDpdMIgD2r0dXvGdsEW5H6x6HLRJYU7C69VefO1x8Gde1ZFSJLfWS1jbCnhtOPxmpfv2LXOA2Xk2tvnwKKPFuZ/oRmwBwqRQDcKNeVQkYcOjtWVBuM/JuYw5b6isojIkYxyYAFn5K7ZBF10fea52y8QltAg6jnMqNHFBmGkQ1j+U43HMi2xMar1Nv0zGsf1s8nUsmUtPOOrbFIR8bHFDMB5zL13Gmr/kGlCkUzedTzzmzsaJXhYawnA3UmARpiYj5ooJZiUoxFRtK3X6pgNPv+IZVPcnwbOl6f+aBaO1CNvPW9n9LmCp01nuSaTRF2YxHqZ8DYQT6WsXT+RD6eUztwYLZ8rM+rcPxamv1VQzFUkzFXvkiVrySGQgJNvXHJAxiU3/NwiC03rSf05VBaPtu/Z7/B8Yn/w7eguloAAAAAElFTkSuQmCC');
+  }
+
+  div.callout-note.callout-style-default .callout-caption {
+    background-color: #dae6fb
+  }
+
+  div.callout-important {
+    border-left-color: #d9534f !important;
+  }
+
+  div.callout-important .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAEKklEQVRYCcVXTWhcVRS+575MJym48A+hSRFr00ySRQhURRfd2HYjk2SSTokuBCkU2o0LoSKKraKIBTcuFCoidGFD08nkBzdREbpQ1EDNIv8qSGMFUboImMSZd4/f9zJv8ibJMC8xJQfO3HPPPef7zrvvvnvviIkpC9nsw0UttFunbUhpFzFtarSd6WJkStVMw5xyVqYTvkwfzuf/5FgtkVoB0729j1rjXwThS7Vio+Mo6DNnvLfahoZ+i/o32lULuJ3NNiz7q6+pyAUkJaFF6JwaM2lUJlV0MlnQn5aTRbEu0SEqHUa0A4AdiGuB1kFXRfVyg5d87+Dg4DL6m2TLAub60ilj7A1Ec4odSAc8X95sHh7+ZRPCFo6Fnp7HfU/fBng/hi10CjCnWnJjsxvDNxWw0NfV6Rv5GgP3I3jGWXumdTD/3cbEOP2ZbOZp69yniG3FQ9z1jD7bnBu9Fc2tKGC2q+uAJOQHBDRiZX1x36o7fWBs7J9ownbtO+n0/qWkvW7UPIfc37WgT6ZGR++EOJyeQDSb9UB+DZ1G6DdLDzyS+b/kBCYGsYgJbSQHuThGKRcw5xdeQf8YdNHsc6ePXrlSYMBuSIAFTGAtQo+VuALo4BX83N190NWZWbynBjhOHsmNfFWLeL6v+ynsA58zDvvAC8j5PkbOcXCMg2PZFk3q8MjI7WAG/Dp9AwP7jdGBOOQkAvlFUB+irtm16I1Zw9YBcpGTGXYmk3kQIC/Cds55l+iMI3jqhjAuaoe+am2Jw5GT3Nbz3CkE12NavmzN5+erJW7046n/CH1RO/RVa8lBLozXk9uqykkGAyRXLWlLv5jyp4RFsG5vGVzpDLnIjTWgnRy2Rr+tDKvRc7Y8AyZq10jj8DqXdnIRNtFZb+t/ZRtXcDiVnzpqx8mPcDWxgARUqx0W1QB9MeUZiNrV4qP+Ehc+BpNgATsTX8ozYKL2NtFYAHc84fG7ndxUPr+AR/iQSns7uSUufAymwDOb2+NjK27lEFocm/EE2WpyIy/Hi66MWuMKJn8RvxIcj87IM5Vh9663ziW36kR0HNenXuxmfaD8JC7tfKbrhFr7LiZCrMjrzTeGx+PmkosrkNzW94ObzwocJ7A1HokLolY+AvkTiD/q1H0cN48c5EL8Crkttsa/AXQVDmutfyku0E7jShx49XqV3MFK8IryDhYVbj7Sj2P2eBxwcXoe8T8idsKKPRcnZw1b+slFTubwUwhktrfnAt7J++jwQtLZcm3sr9LQrjRzz6cfMv9aLvgmnAGvpoaGLxM4mAEaLV7iAzQ3oU0IvD5x9ix3yF2RAAuYAOO2f7PEFWCXZ4C9Pb2UsgDeVnFSpbFK7/IWu7TPTvBqzbGdCHOJQSxiEjt6IyZmxQyEJHv6xyQsYk//moVFsN2zP6fRImjfq7/n/wFDguUQFNEwugAAAABJRU5ErkJggg==');
+  }
+
+  div.callout-important.callout-style-default .callout-caption {
+    background-color: #f7dddc
+  }
+
+  div.callout-warning {
+    border-left-color: #f0ad4e !important;
+  }
+
+  div.callout-warning .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAETklEQVRYCeVWW2gcVRg+58yaTUnizqbipZeX4uWhBEniBaoUX1Ioze52t7sRq6APio9V9MEaoWlVsFasRq0gltaAPuxms8lu0gcviE/FFOstVbSIxgcv6SU7EZqmdc7v9+9mJtNks51NTUH84ed889/PP+cmxP+d5FIbMJmNbpREu4WUkiTtCicKny0l1pIKmBzovF2S+hIJHX8iEu3hZJ5lNZGqyRrGSIQpq15AzF28jgpeY6yk6GVdrfFqdrD6Iw+QlB8g0YS2g7dyQmXM/IDhBhT0UCiRf59lfqmmDvzRt6kByV/m4JjtzuaujMUM2c5Z2d6JdKrRb3K2q6mA+oYVz8JnDdKPmmNthzkAk/lN63sYPgevrguc72aZX/L9C6x09GYyxBgCX4NlvyGUHOKELlm5rXeR1kchuChJt4SSwyddZRXgvwMGvYo4QSlk3/zkHD8UHxwVJA6zjZZqP8v8kK8OWLnIZtLyCAJagYC4rTGW/9Pqj92N/c+LUaAj27movwbi19tk/whRCIE7Q9vyI6yvRpftAKVTdUjOW40X3h5OXsKCdmFcx0xlLJoSuQngnrJe7Kcjm4OMq9FlC7CMmScQANuNvjfP3PjGXDBaUQmbp296S5L4DrpbrHN1T87ZVEZVCzg1FF0Ft+dKrlLukI+/c9ENo+TvlTDbYFvuKPtQ9+l052rXrgKoWkDAFnvh0wTOmYn8R5f4k/jN/fZiCM1tQx9jQQ4ANhqG4hiL0qIFTGViG9DKB7GYzgubnpofgYRwO+DFjh0Zin2m4b/97EDkXkc+f6xYAPX0KK2I/7fUQuwzuwo/L3AkcjugPNixC8cHf0FyPjWlItmLxWw4Ou9YsQCr5fijMGoD/zpdRy95HRysyXA74MWOnscpO4j2y3HAVisw85hX5+AFBRSHt4ShfLFkIMXTqyKFc46xdzQM6XbAi702a7sy04J0+feReMFKp5q9esYLCqAZYw/k14E/xcLLsFElaornTuJB0svMuJINy8xkIYuL+xPAlWRceH6+HX7THJ0djLUom46zREu7tTkxwmf/FdOZ/sh6Q8qvEAiHpm4PJ4a/doJe0gH1t+aHRgCzOvBvJedEK5OFE5jpm4AGP2a8Dxe3gGJ/pAutug9Gp6he92CsSsWBaEcxGx0FHytmIpuqGkOpldqNYQK8cSoXvd+xLxXADw0kf6UkJNFtdo5MOgaLjiQOQHcn+A6h5NuL2s0qsC2LOM75PcF3yr5STuBSAcGG+meA14K/CI21HcS4LBT6tv0QAh8Dr5l93AhZzG5ZJ4VxAqdZUEl9z7WJ4aN+svMvwHHL21UKTd1mqvChH7/Za5xzXBBKrUcB0TQ+Ulgkfbi/H/YT5EptrGzsEK7tR1B7ln9BBwckYfMiuSqklSznIuoIIOM42MQO+QnduCoFCI0bpkzjCjddHPN/F+2Yu+sd9bKNpVwHhbS3LluK/0zgfwD0xYI5dXuzlQAAAABJRU5ErkJggg==');
+  }
+
+  div.callout-warning.callout-style-default .callout-caption {
+    background-color: #fcefdc
+  }
+
+  div.callout-tip {
+    border-left-color: #02b875 !important;
+  }
+
+  div.callout-tip .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAADr0lEQVRYCe1XTWgTQRj9ZjZV8a9SPIkKgj8I1bMHsUWrqYLVg4Ue6v9BwZOxSYsIerFao7UiUryIqJcqgtpimhbBXoSCVxUFe9CTiogUrUp2Pt+3aUI2u5vdNh4dmMzOzHvvezuz8xNFM0mjnbXaNu1MvFWRXkXEyE6aYOYJpdW4IXuA4r0fo8qqSMDBU0v1HJUgVieAXxzCsdE/YJTdFcVIZQNMyhruOMJKXYFoLfIfIvVIMWdsrd+Rpd86ZmyzzjJmLStqRn0v8lzkb4rVIXvnpScOJuAn2ACC65FkPzEdEy4TPWRLJ2h7z4cArXzzaOdKlbOvKKX25Wl00jSnrwVxAg3o4dRxhO13RBSdNvH0xSARv3adTXbBdTf64IWO2vH0LT+cv4GR1DJt+DUItaQogeBX/chhbTBxEiZ6gftlDNXTrvT7co4ub5A6gp9HIcHvzTa46OS5fBeP87Qm0fQkr4FsYgVQ7Qg+ZayaDg9jhg1GkWj8RG6lkeSacrrHgDaxdoBiZPg+NXV/KifMuB6//JmYH4CntVEHy/keA6x4h4CU5oFy8GzrBS18cLJMXcljAKB6INjWsRcuZBWVaS3GDrqB7rdapVIeA+isQ57Eev9eCqzqOa81CY05VLd6SamW2wA2H3SiTbnbSxmzfp7WtKZkqy4mdyAlGx7ennghYf8voqp9cLSgKdqNfa6RdRsAAkPwRuJZNbpByn+RrJi1RXTwdi8RQF6ymDwGMAtZ6TVE+4uoKh+MYkcLsT0Hk8eAienbiGdjJHZTpmNjlbFJNKDVAp2fJlYju6IreQxQ08UJDNYdoLSl6AadO+fFuCQqVMB1NJwPm69T04Wv5WhfcWyfXQB+wXRs1pt+nCknRa0LVzSA/2B+a9+zQJadb7IyyV24YAxKp2Jqs3emZTuNnKxsah+uabKbMk7CbTgJx/zIgQYErIeTKRQ9yD9wxVof5YolPHqaWo7TD6tJlh7jQnK5z2n3+fGdggIOx2kaa2YI9QWarc5Ce1ipNWMKeSG4DysFF52KBmTNMmn5HqCFkwy34rDg05gDwgH3bBi+sgFhN/e8QvRn8kbamCOhgrZ9GJhFDgfcMHzFb6BAtjKpFhzTjwv1KCVuxHvCbsSiEz4CANnj84cwHdFXAbAOJ4LTSAawGWFn5tDhLMYz6nWeU2wJfIhmIJBefcd/A5FWQWGgrWzyORZ3Q6HuV+Jf0Bj+BTX69fm1zWgK7By1YTXchFDORywnfQ7GpzOo6S+qECrsx2ifVQAAAABJRU5ErkJggg==');
+  }
+
+  div.callout-tip.callout-style-default .callout-caption {
+    background-color: #ccf1e3
+  }
+
+  div.callout-caution {
+    border-left-color: #fd7e14 !important;
+  }
+
+  div.callout-caution .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAACV0lEQVRYCdVWzWoUQRCuqp2ICBLJXgITZL1EfQDBW/bkzUMUD7klD+ATSHBEfAIfQO+iXsWDxJsHL96EHAwhgzlkg8nBg25XWb0zIb0zs9muYYWkoKeru+vn664fBqElyZNuyh167NXJ8Ut8McjbmEraKHkd7uAnAFku+VWdb3reSmRV8PKSLfZ0Gjn3a6Xlcq9YGb6tADjn+lUfTXtVmaZ1KwBIvFI11rRXlWlatwIAAv2asaa9mlB9wwygiDX26qaw1yYPzFXg2N1GgG0FMF8Oj+VIx7E/03lHx8UhvYyNZLN7BwSPgekXXLribw7w5/c8EF+DBK5idvDVYtEEwMeYefjjLAdEyQ3M9nfOkgnPTEkYU+sxMq0BxNR6jExrAI31H1rzvLEfRIdgcv1XEdj6QTQAS2wtstEALLG1yEZ3QhH6oDX7ExBSFEkFINXH98NTrme5IOaaA7kIfiu2L8A3qhH9zRbukdCqdsA98TdElyeMe5BI8Rs2xHRIsoTSSVFfCFCWGPn9XHb4cdobRIWABNf0add9jakDjQJpJ1bTXOJXnnRXHRf+dNL1ZV1MBRCXhMbaHqGI1JkKIL7+i8uffuP6wVQAzO7+qVEbF6NbS0LJureYcWXUUhH66nLR5rYmva+2tjRFtojkM2aD76HEGAD3tPtKM309FJg5j/K682ywcWJ3PASCcycH/22u+Bh7Aa0ehM2Fu4z0SAE81HF9RkB21c5bEn4Dzw+/qNOyXr3DCTQDMBOdhi4nAgiFDGCinIa2owCEChUwD8qzd03PG+qdW/4fDzjUMcE1ZpIAAAAASUVORK5CYII=');
+  }
+
+  div.callout-caution.callout-style-default .callout-caption {
+    background-color: #ffe5d0
+  }
+
+  </style>
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+  <script type="module" src="talk_files/libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+  <link href="talk_files/libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&amp;display=swap" rel="stylesheet">
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+
+<section id="section" class="slide level2 titlepage" data-background-image="assets/uthsc-building-faded.png" data-background-size="cover" data-background-position="center" data-background-color="#ffffff">
+<h2></h2>
+<div class="titlepage-slide">
+<div class="titlepage-content">
+<p><img class="tp-logo" src="assets/uthsc-logo-centered.png" alt="University of Tennessee Health Sciences"></p>
+<p class="tp-title">
+Julia Package for Large Matrix Decomposition in Metabolomics: BigRiverSchneiden <svg viewbox="0 0 24 24" width="0.85em" height="0.95em" style="vertical-align:-0.08em;fill:#E78824;" aria-hidden="true"> <path d="M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3z"></path> </svg>
+</p>
+<p class="tp-author">
+Abhisek Banerjee
+</p>
+<p class="tp-institute">
+UT Health Science Center — Preventive Medicine / Biostatistics
+</p>
+</div>
+</div>
+</section>
+<section id="outline" class="slide level2">
+<h2>Outline</h2>
+<div class="toc-card">
+<ol type="1">
+<li><a href="#/data">The data: metabolomics</a></li>
+<li><a href="#/challenge">The challenge</a></li>
+<li><a href="#/pca">PCA — the main patterns</a></li>
+<li><a href="#/pls">PLS — patterns tied to an outcome</a></li>
+<li><a href="#/explore">Spin it yourself</a></li>
+<li><a href="#/project">The project</a></li>
+</ol>
+</div>
+</section>
+<section id="data" class="slide level2">
+<h2>The data: metabolomics</h2>
+<p>Metabolomics measures the thousands of small molecules called metabolites which the body produces through metabolism, giving a chemical snapshot of a person’s state. Each sample (e.g.&nbsp;blood or urine) is profiled for thousands of metabolites, and stacking many samples gives one very large matrix with samples in rows, metabolites in columns.</p>
+<div class="cell">
+<div class="sourceCode cell-code hidden" id="cb1" data-startfrom="109" data-source-offset="-215"><pre class="sourceCode numberSource js number-lines code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 108;"><span id="cb1-109"><a href="#cb1-109"></a>d3 <span class="op">=</span> <span class="pp">require</span>(<span class="st">"d3@7"</span>)</span>
+<span id="cb1-110"><a href="#cb1-110"></a></span>
+<span id="cb1-111"><a href="#cb1-111"></a>makeRng <span class="op">=</span> <span class="kw">function</span> (seed) {</span>
+<span id="cb1-112"><a href="#cb1-112"></a>  <span class="kw">let</span> s <span class="op">=</span> seed <span class="op">&gt;&gt;&gt;</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-113"><a href="#cb1-113"></a>  <span class="cf">return</span> <span class="kw">function</span> () {</span>
+<span id="cb1-114"><a href="#cb1-114"></a>    s <span class="op">=</span> (s <span class="op">+</span> <span class="bn">0x6d2b79f5</span>) <span class="op">&gt;&gt;&gt;</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-115"><a href="#cb1-115"></a>    <span class="kw">let</span> t <span class="op">=</span> s<span class="op">;</span></span>
+<span id="cb1-116"><a href="#cb1-116"></a>    t <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">imul</span>(t <span class="op">^</span> (t <span class="op">&gt;&gt;&gt;</span> <span class="dv">15</span>)<span class="op">,</span> <span class="dv">1</span> <span class="op">|</span> t)<span class="op">;</span></span>
+<span id="cb1-117"><a href="#cb1-117"></a>    t <span class="op">^=</span> t <span class="op">+</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">imul</span>(t <span class="op">^</span> (t <span class="op">&gt;&gt;&gt;</span> <span class="dv">7</span>)<span class="op">,</span> <span class="dv">61</span> <span class="op">|</span> t)<span class="op">;</span></span>
+<span id="cb1-118"><a href="#cb1-118"></a>    <span class="cf">return</span> ((t <span class="op">^</span> (t <span class="op">&gt;&gt;&gt;</span> <span class="dv">14</span>)) <span class="op">&gt;&gt;&gt;</span> <span class="dv">0</span>) <span class="op">/</span> <span class="dv">4294967296</span><span class="op">;</span></span>
+<span id="cb1-119"><a href="#cb1-119"></a>  }<span class="op">;</span></span>
+<span id="cb1-120"><a href="#cb1-120"></a>}</span>
+<span id="cb1-121"><a href="#cb1-121"></a></span>
+<span id="cb1-122"><a href="#cb1-122"></a>randn <span class="op">=</span> <span class="kw">function</span> (rng) {</span>
+<span id="cb1-123"><a href="#cb1-123"></a>  <span class="kw">let</span> u <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> v <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-124"><a href="#cb1-124"></a>  <span class="cf">while</span> (u <span class="op">===</span> <span class="dv">0</span>) u <span class="op">=</span> <span class="fu">rng</span>()<span class="op">;</span></span>
+<span id="cb1-125"><a href="#cb1-125"></a>  <span class="cf">while</span> (v <span class="op">===</span> <span class="dv">0</span>) v <span class="op">=</span> <span class="fu">rng</span>()<span class="op">;</span></span>
+<span id="cb1-126"><a href="#cb1-126"></a>  <span class="cf">return</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sqrt</span>(<span class="op">-</span><span class="dv">2</span> <span class="op">*</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">log</span>(u)) <span class="op">*</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">cos</span>(<span class="dv">2</span> <span class="op">*</span> <span class="bu">Math</span><span class="op">.</span><span class="cn">PI</span> <span class="op">*</span> v)<span class="op">;</span></span>
+<span id="cb1-127"><a href="#cb1-127"></a>}</span>
+<span id="cb1-128"><a href="#cb1-128"></a></span>
+<span id="cb1-129"><a href="#cb1-129"></a><span class="co">// Two groups. Big spread along x (drives total variance) but the groups</span></span>
+<span id="cb1-130"><a href="#cb1-130"></a><span class="co">// only differ along y (the thing we actually care about).</span></span>
+<span id="cb1-131"><a href="#cb1-131"></a>data <span class="op">=</span> {</span>
+<span id="cb1-132"><a href="#cb1-132"></a>  <span class="kw">const</span> rng <span class="op">=</span> <span class="fu">makeRng</span>(<span class="dv">42</span>)<span class="op">;</span></span>
+<span id="cb1-133"><a href="#cb1-133"></a>  <span class="kw">const</span> pts <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb1-134"><a href="#cb1-134"></a>  <span class="kw">const</span> N <span class="op">=</span> <span class="dv">110</span><span class="op">;</span></span>
+<span id="cb1-135"><a href="#cb1-135"></a>  <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> N<span class="op">;</span> i<span class="op">++</span>) pts<span class="op">.</span><span class="fu">push</span>({ <span class="dt">x</span><span class="op">:</span> <span class="fu">randn</span>(rng) <span class="op">*</span> <span class="fl">2.6</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span>  <span class="fl">1.3</span> <span class="op">+</span> <span class="fu">randn</span>(rng) <span class="op">*</span> <span class="fl">0.55</span><span class="op">,</span> <span class="dt">g</span><span class="op">:</span> <span class="dv">0</span> })<span class="op">;</span></span>
+<span id="cb1-136"><a href="#cb1-136"></a>  <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> N<span class="op">;</span> i<span class="op">++</span>) pts<span class="op">.</span><span class="fu">push</span>({ <span class="dt">x</span><span class="op">:</span> <span class="fu">randn</span>(rng) <span class="op">*</span> <span class="fl">2.6</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="op">-</span><span class="fl">1.3</span> <span class="op">+</span> <span class="fu">randn</span>(rng) <span class="op">*</span> <span class="fl">0.55</span><span class="op">,</span> <span class="dt">g</span><span class="op">:</span> <span class="dv">1</span> })<span class="op">;</span></span>
+<span id="cb1-137"><a href="#cb1-137"></a>  <span class="cf">return</span> pts<span class="op">;</span></span>
+<span id="cb1-138"><a href="#cb1-138"></a>}</span>
+<span id="cb1-139"><a href="#cb1-139"></a></span>
+<span id="cb1-140"><a href="#cb1-140"></a>meanVec <span class="op">=</span> ({ <span class="dt">x</span><span class="op">:</span> d3<span class="op">.</span><span class="fu">mean</span>(data<span class="op">,</span> d <span class="kw">=&gt;</span> d<span class="op">.</span><span class="at">x</span>)<span class="op">,</span> <span class="dt">y</span><span class="op">:</span> d3<span class="op">.</span><span class="fu">mean</span>(data<span class="op">,</span> d <span class="kw">=&gt;</span> d<span class="op">.</span><span class="at">y</span>) })</span>
+<span id="cb1-141"><a href="#cb1-141"></a></span>
+<span id="cb1-142"><a href="#cb1-142"></a><span class="co">// PCA direction = top eigenvector of the 2x2 covariance matrix.</span></span>
+<span id="cb1-143"><a href="#cb1-143"></a>pcaDir <span class="op">=</span> {</span>
+<span id="cb1-144"><a href="#cb1-144"></a>  <span class="kw">const</span> mx <span class="op">=</span> meanVec<span class="op">.</span><span class="at">x</span><span class="op">,</span> my <span class="op">=</span> meanVec<span class="op">.</span><span class="at">y</span><span class="op">;</span></span>
+<span id="cb1-145"><a href="#cb1-145"></a>  <span class="kw">let</span> a <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> b <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> c <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-146"><a href="#cb1-146"></a>  <span class="cf">for</span> (<span class="kw">const</span> d <span class="kw">of</span> data) { <span class="kw">const</span> dx <span class="op">=</span> d<span class="op">.</span><span class="at">x</span> <span class="op">-</span> mx<span class="op">,</span> dy <span class="op">=</span> d<span class="op">.</span><span class="at">y</span> <span class="op">-</span> my<span class="op">;</span> a <span class="op">+=</span> dx <span class="op">*</span> dx<span class="op">;</span> b <span class="op">+=</span> dx <span class="op">*</span> dy<span class="op">;</span> c <span class="op">+=</span> dy <span class="op">*</span> dy<span class="op">;</span> }</span>
+<span id="cb1-147"><a href="#cb1-147"></a>  <span class="kw">const</span> n <span class="op">=</span> data<span class="op">.</span><span class="at">length</span><span class="op">;</span> a <span class="op">/=</span> n<span class="op">;</span> b <span class="op">/=</span> n<span class="op">;</span> c <span class="op">/=</span> n<span class="op">;</span></span>
+<span id="cb1-148"><a href="#cb1-148"></a>  <span class="kw">const</span> tr <span class="op">=</span> a <span class="op">+</span> c<span class="op">,</span> det <span class="op">=</span> a <span class="op">*</span> c <span class="op">-</span> b <span class="op">*</span> b<span class="op">;</span></span>
+<span id="cb1-149"><a href="#cb1-149"></a>  <span class="kw">const</span> lam <span class="op">=</span> tr <span class="op">/</span> <span class="dv">2</span> <span class="op">+</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sqrt</span>(<span class="bu">Math</span><span class="op">.</span><span class="fu">max</span>(<span class="dv">0</span><span class="op">,</span> (tr <span class="op">*</span> tr) <span class="op">/</span> <span class="dv">4</span> <span class="op">-</span> det))<span class="op">;</span></span>
+<span id="cb1-150"><a href="#cb1-150"></a>  <span class="kw">const</span> v1x <span class="op">=</span> b<span class="op">,</span> v1y <span class="op">=</span> lam <span class="op">-</span> a<span class="op">;</span></span>
+<span id="cb1-151"><a href="#cb1-151"></a>  <span class="kw">const</span> v2x <span class="op">=</span> lam <span class="op">-</span> c<span class="op">,</span> v2y <span class="op">=</span> b<span class="op">;</span></span>
+<span id="cb1-152"><a href="#cb1-152"></a>  <span class="kw">let</span> vx<span class="op">,</span> vy<span class="op">;</span></span>
+<span id="cb1-153"><a href="#cb1-153"></a>  <span class="cf">if</span> (<span class="bu">Math</span><span class="op">.</span><span class="fu">hypot</span>(v1x<span class="op">,</span> v1y) <span class="op">&gt;=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">hypot</span>(v2x<span class="op">,</span> v2y)) { vx <span class="op">=</span> v1x<span class="op">;</span> vy <span class="op">=</span> v1y<span class="op">;</span> } <span class="cf">else</span> { vx <span class="op">=</span> v2x<span class="op">;</span> vy <span class="op">=</span> v2y<span class="op">;</span> }</span>
+<span id="cb1-154"><a href="#cb1-154"></a>  <span class="kw">const</span> nrm <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">hypot</span>(vx<span class="op">,</span> vy) <span class="op">||</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb1-155"><a href="#cb1-155"></a>  <span class="cf">return</span> { <span class="dt">x</span><span class="op">:</span> vx <span class="op">/</span> nrm<span class="op">,</span> <span class="dt">y</span><span class="op">:</span> vy <span class="op">/</span> nrm }<span class="op">;</span></span>
+<span id="cb1-156"><a href="#cb1-156"></a>}</span>
+<span id="cb1-157"><a href="#cb1-157"></a></span>
+<span id="cb1-158"><a href="#cb1-158"></a><span class="co">// PLS direction (single outcome) = normalized covariance of features with the label.</span></span>
+<span id="cb1-159"><a href="#cb1-159"></a>plsDir <span class="op">=</span> {</span>
+<span id="cb1-160"><a href="#cb1-160"></a>  <span class="kw">const</span> mx <span class="op">=</span> meanVec<span class="op">.</span><span class="at">x</span><span class="op">,</span> my <span class="op">=</span> meanVec<span class="op">.</span><span class="at">y</span><span class="op">;</span></span>
+<span id="cb1-161"><a href="#cb1-161"></a>  <span class="kw">let</span> wx <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> wy <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-162"><a href="#cb1-162"></a>  <span class="cf">for</span> (<span class="kw">const</span> d <span class="kw">of</span> data) { <span class="kw">const</span> yy <span class="op">=</span> d<span class="op">.</span><span class="at">g</span> <span class="op">===</span> <span class="dv">0</span> <span class="op">?</span> <span class="dv">1</span> <span class="op">:</span> <span class="op">-</span><span class="dv">1</span><span class="op">;</span> wx <span class="op">+=</span> (d<span class="op">.</span><span class="at">x</span> <span class="op">-</span> mx) <span class="op">*</span> yy<span class="op">;</span> wy <span class="op">+=</span> (d<span class="op">.</span><span class="at">y</span> <span class="op">-</span> my) <span class="op">*</span> yy<span class="op">;</span> }</span>
+<span id="cb1-163"><a href="#cb1-163"></a>  <span class="kw">const</span> nrm <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">hypot</span>(wx<span class="op">,</span> wy) <span class="op">||</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb1-164"><a href="#cb1-164"></a>  <span class="cf">return</span> { <span class="dt">x</span><span class="op">:</span> wx <span class="op">/</span> nrm<span class="op">,</span> <span class="dt">y</span><span class="op">:</span> wy <span class="op">/</span> nrm }<span class="op">;</span></span>
+<span id="cb1-165"><a href="#cb1-165"></a>}</span>
+<span id="cb1-166"><a href="#cb1-166"></a></span>
+<span id="cb1-167"><a href="#cb1-167"></a>kde <span class="op">=</span> <span class="kw">function</span> (values<span class="op">,</span> bw<span class="op">,</span> xs) {</span>
+<span id="cb1-168"><a href="#cb1-168"></a>  <span class="cf">return</span> xs<span class="op">.</span><span class="fu">map</span>(x <span class="kw">=&gt;</span> {</span>
+<span id="cb1-169"><a href="#cb1-169"></a>    <span class="kw">let</span> s <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-170"><a href="#cb1-170"></a>    <span class="cf">for</span> (<span class="kw">const</span> v <span class="kw">of</span> values) { <span class="kw">const</span> u <span class="op">=</span> (x <span class="op">-</span> v) <span class="op">/</span> bw<span class="op">;</span> s <span class="op">+=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">exp</span>(<span class="op">-</span><span class="fl">0.5</span> <span class="op">*</span> u <span class="op">*</span> u)<span class="op">;</span> }</span>
+<span id="cb1-171"><a href="#cb1-171"></a>    <span class="cf">return</span> [x<span class="op">,</span> s <span class="op">/</span> (values<span class="op">.</span><span class="at">length</span> <span class="op">*</span> bw <span class="op">*</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sqrt</span>(<span class="dv">2</span> <span class="op">*</span> <span class="bu">Math</span><span class="op">.</span><span class="cn">PI</span>))]<span class="op">;</span></span>
+<span id="cb1-172"><a href="#cb1-172"></a>  })<span class="op">;</span></span>
+<span id="cb1-173"><a href="#cb1-173"></a>}</span>
+<span id="cb1-174"><a href="#cb1-174"></a></span>
+<span id="cb1-175"><a href="#cb1-175"></a><span class="co">// standardized separation between the two groups along a projection direction</span></span>
+<span id="cb1-176"><a href="#cb1-176"></a>separation <span class="op">=</span> <span class="kw">function</span> (ts) {</span>
+<span id="cb1-177"><a href="#cb1-177"></a>  <span class="kw">const</span> t0 <span class="op">=</span> ts<span class="op">.</span><span class="fu">filter</span>((_<span class="op">,</span> i) <span class="kw">=&gt;</span> data[i]<span class="op">.</span><span class="at">g</span> <span class="op">===</span> <span class="dv">0</span>)<span class="op">;</span></span>
+<span id="cb1-178"><a href="#cb1-178"></a>  <span class="kw">const</span> t1 <span class="op">=</span> ts<span class="op">.</span><span class="fu">filter</span>((_<span class="op">,</span> i) <span class="kw">=&gt;</span> data[i]<span class="op">.</span><span class="at">g</span> <span class="op">===</span> <span class="dv">1</span>)<span class="op">;</span></span>
+<span id="cb1-179"><a href="#cb1-179"></a>  <span class="kw">const</span> m0 <span class="op">=</span> d3<span class="op">.</span><span class="fu">mean</span>(t0)<span class="op">,</span> m1 <span class="op">=</span> d3<span class="op">.</span><span class="fu">mean</span>(t1)<span class="op">;</span></span>
+<span id="cb1-180"><a href="#cb1-180"></a>  <span class="kw">const</span> v0 <span class="op">=</span> d3<span class="op">.</span><span class="fu">variance</span>(t0)<span class="op">,</span> v1 <span class="op">=</span> d3<span class="op">.</span><span class="fu">variance</span>(t1)<span class="op">;</span></span>
+<span id="cb1-181"><a href="#cb1-181"></a>  <span class="kw">const</span> sd <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sqrt</span>((v0 <span class="op">+</span> v1) <span class="op">/</span> <span class="dv">2</span>) <span class="op">||</span> <span class="fl">1e-9</span><span class="op">;</span></span>
+<span id="cb1-182"><a href="#cb1-182"></a>  <span class="cf">return</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">abs</span>(m0 <span class="op">-</span> m1) <span class="op">/</span> sd<span class="op">;</span></span>
+<span id="cb1-183"><a href="#cb1-183"></a>}</span>
+<span id="cb1-184"><a href="#cb1-184"></a></span>
+<span id="cb1-185"><a href="#cb1-185"></a><span class="co">// the drawing routine: takes ANY direction and renders scatter + projection</span></span>
+<span id="cb1-186"><a href="#cb1-186"></a>figure <span class="op">=</span> <span class="kw">function</span> (dir<span class="op">,</span> leftLabel) {</span>
+<span id="cb1-187"><a href="#cb1-187"></a>  <span class="kw">const</span> aid <span class="op">=</span> <span class="st">"arrowhd-"</span> <span class="op">+</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">random</span>()<span class="op">.</span><span class="fu">toString</span>(<span class="dv">36</span>)<span class="op">.</span><span class="fu">slice</span>(<span class="dv">2</span>)<span class="op">;</span></span>
+<span id="cb1-188"><a href="#cb1-188"></a>  <span class="kw">const</span> W <span class="op">=</span> <span class="dv">1000</span><span class="op">,</span> H <span class="op">=</span> <span class="dv">380</span><span class="op">;</span></span>
+<span id="cb1-189"><a href="#cb1-189"></a>  <span class="kw">const</span> colors <span class="op">=</span> [<span class="st">"#E78824"</span><span class="op">,</span> <span class="st">"#007E5A"</span>]<span class="op">;</span></span>
+<span id="cb1-190"><a href="#cb1-190"></a>  <span class="kw">const</span> names <span class="op">=</span> [<span class="st">"Group A"</span><span class="op">,</span> <span class="st">"Group B"</span>]<span class="op">;</span></span>
+<span id="cb1-191"><a href="#cb1-191"></a></span>
+<span id="cb1-192"><a href="#cb1-192"></a>  <span class="kw">const</span> svg <span class="op">=</span> d3<span class="op">.</span><span class="fu">create</span>(<span class="st">"svg"</span>)</span>
+<span id="cb1-193"><a href="#cb1-193"></a>    <span class="op">.</span><span class="fu">attr</span>(<span class="st">"viewBox"</span><span class="op">,</span> <span class="vs">`0 0 </span><span class="sc">${</span>W<span class="sc">}</span><span class="vs"> </span><span class="sc">${</span>H<span class="sc">}</span><span class="vs">`</span>)</span>
+<span id="cb1-194"><a href="#cb1-194"></a>    <span class="op">.</span><span class="fu">style</span>(<span class="st">"width"</span><span class="op">,</span> <span class="st">"100%"</span>)<span class="op">.</span><span class="fu">style</span>(<span class="st">"height"</span><span class="op">,</span> <span class="st">"auto"</span>)</span>
+<span id="cb1-195"><a href="#cb1-195"></a>    <span class="op">.</span><span class="fu">style</span>(<span class="st">"font-family"</span><span class="op">,</span> <span class="st">"inherit"</span>)<span class="op">;</span></span>
+<span id="cb1-196"><a href="#cb1-196"></a></span>
+<span id="cb1-197"><a href="#cb1-197"></a>  <span class="co">// ---- left: scatter (equal aspect so the arrow direction is honest) ----</span></span>
+<span id="cb1-198"><a href="#cb1-198"></a>  <span class="kw">const</span> sx0 <span class="op">=</span> <span class="dv">30</span><span class="op">,</span> sy0 <span class="op">=</span> <span class="dv">40</span><span class="op">,</span> sW <span class="op">=</span> <span class="dv">560</span><span class="op">,</span> sH <span class="op">=</span> <span class="dv">300</span><span class="op">;</span></span>
+<span id="cb1-199"><a href="#cb1-199"></a>  <span class="kw">const</span> yhalf <span class="op">=</span> (sH <span class="op">/</span> sW) <span class="op">*</span> <span class="fl">8.5</span><span class="op">;</span></span>
+<span id="cb1-200"><a href="#cb1-200"></a>  <span class="kw">const</span> sx <span class="op">=</span> d3<span class="op">.</span><span class="fu">scaleLinear</span>()<span class="op">.</span><span class="fu">domain</span>([<span class="op">-</span><span class="fl">8.5</span><span class="op">,</span> <span class="fl">8.5</span>])<span class="op">.</span><span class="fu">range</span>([sx0<span class="op">,</span> sx0 <span class="op">+</span> sW])<span class="op">;</span></span>
+<span id="cb1-201"><a href="#cb1-201"></a>  <span class="kw">const</span> sy <span class="op">=</span> d3<span class="op">.</span><span class="fu">scaleLinear</span>()<span class="op">.</span><span class="fu">domain</span>([<span class="op">-</span>yhalf<span class="op">,</span> yhalf])<span class="op">.</span><span class="fu">range</span>([sy0 <span class="op">+</span> sH<span class="op">,</span> sy0])<span class="op">;</span></span>
+<span id="cb1-202"><a href="#cb1-202"></a></span>
+<span id="cb1-203"><a href="#cb1-203"></a>  svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"rect"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"x"</span><span class="op">,</span> sx0)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y"</span><span class="op">,</span> sy0)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"width"</span><span class="op">,</span> sW)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"height"</span><span class="op">,</span> sH)</span>
+<span id="cb1-204"><a href="#cb1-204"></a>    <span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> <span class="st">"none"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"stroke"</span><span class="op">,</span> <span class="st">"rgba(0,0,0,0.15)"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"rx"</span><span class="op">,</span> <span class="dv">10</span>)<span class="op">;</span></span>
+<span id="cb1-205"><a href="#cb1-205"></a></span>
+<span id="cb1-206"><a href="#cb1-206"></a>  <span class="kw">const</span> mx <span class="op">=</span> meanVec<span class="op">.</span><span class="at">x</span><span class="op">,</span> my <span class="op">=</span> meanVec<span class="op">.</span><span class="at">y</span><span class="op">;</span></span>
+<span id="cb1-207"><a href="#cb1-207"></a>  <span class="kw">const</span> ts <span class="op">=</span> data<span class="op">.</span><span class="fu">map</span>(d <span class="kw">=&gt;</span> (d<span class="op">.</span><span class="at">x</span> <span class="op">-</span> mx) <span class="op">*</span> dir<span class="op">.</span><span class="at">x</span> <span class="op">+</span> (d<span class="op">.</span><span class="at">y</span> <span class="op">-</span> my) <span class="op">*</span> dir<span class="op">.</span><span class="at">y</span>)<span class="op">;</span></span>
+<span id="cb1-208"><a href="#cb1-208"></a>  <span class="kw">const</span> tmin <span class="op">=</span> d3<span class="op">.</span><span class="fu">min</span>(ts)<span class="op">,</span> tmax <span class="op">=</span> d3<span class="op">.</span><span class="fu">max</span>(ts)<span class="op">;</span></span>
+<span id="cb1-209"><a href="#cb1-209"></a>  <span class="kw">const</span> tpad <span class="op">=</span> (tmax <span class="op">-</span> tmin) <span class="op">*</span> <span class="fl">0.08</span> <span class="op">+</span> <span class="fl">1e-6</span><span class="op">;</span></span>
+<span id="cb1-210"><a href="#cb1-210"></a>  <span class="kw">const</span> aLo <span class="op">=</span> { <span class="dt">x</span><span class="op">:</span> mx <span class="op">+</span> (tmin <span class="op">-</span> tpad) <span class="op">*</span> dir<span class="op">.</span><span class="at">x</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> my <span class="op">+</span> (tmin <span class="op">-</span> tpad) <span class="op">*</span> dir<span class="op">.</span><span class="at">y</span> }<span class="op">;</span></span>
+<span id="cb1-211"><a href="#cb1-211"></a>  <span class="kw">const</span> aHi <span class="op">=</span> { <span class="dt">x</span><span class="op">:</span> mx <span class="op">+</span> (tmax <span class="op">+</span> tpad) <span class="op">*</span> dir<span class="op">.</span><span class="at">x</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> my <span class="op">+</span> (tmax <span class="op">+</span> tpad) <span class="op">*</span> dir<span class="op">.</span><span class="at">y</span> }<span class="op">;</span></span>
+<span id="cb1-212"><a href="#cb1-212"></a></span>
+<span id="cb1-213"><a href="#cb1-213"></a>  data<span class="op">.</span><span class="fu">forEach</span>((d<span class="op">,</span> i) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-214"><a href="#cb1-214"></a>    <span class="kw">const</span> t <span class="op">=</span> ts[i]<span class="op">;</span></span>
+<span id="cb1-215"><a href="#cb1-215"></a>    svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"line"</span>)</span>
+<span id="cb1-216"><a href="#cb1-216"></a>      <span class="op">.</span><span class="fu">attr</span>(<span class="st">"x1"</span><span class="op">,</span> <span class="fu">sx</span>(d<span class="op">.</span><span class="at">x</span>))<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y1"</span><span class="op">,</span> <span class="fu">sy</span>(d<span class="op">.</span><span class="at">y</span>))</span>
+<span id="cb1-217"><a href="#cb1-217"></a>      <span class="op">.</span><span class="fu">attr</span>(<span class="st">"x2"</span><span class="op">,</span> <span class="fu">sx</span>(mx <span class="op">+</span> t <span class="op">*</span> dir<span class="op">.</span><span class="at">x</span>))<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y2"</span><span class="op">,</span> <span class="fu">sy</span>(my <span class="op">+</span> t <span class="op">*</span> dir<span class="op">.</span><span class="at">y</span>))</span>
+<span id="cb1-218"><a href="#cb1-218"></a>      <span class="op">.</span><span class="fu">attr</span>(<span class="st">"stroke"</span><span class="op">,</span> colors[d<span class="op">.</span><span class="at">g</span>])<span class="op">.</span><span class="fu">attr</span>(<span class="st">"stroke-width"</span><span class="op">,</span> <span class="dv">1</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"opacity"</span><span class="op">,</span> <span class="fl">0.12</span>)<span class="op">;</span></span>
+<span id="cb1-219"><a href="#cb1-219"></a>  })<span class="op">;</span></span>
+<span id="cb1-220"><a href="#cb1-220"></a></span>
+<span id="cb1-221"><a href="#cb1-221"></a>  svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"defs"</span>)<span class="op">.</span><span class="fu">append</span>(<span class="st">"marker"</span>)</span>
+<span id="cb1-222"><a href="#cb1-222"></a>    <span class="op">.</span><span class="fu">attr</span>(<span class="st">"id"</span><span class="op">,</span> aid)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"viewBox"</span><span class="op">,</span> <span class="st">"0 0 10 10"</span>)</span>
+<span id="cb1-223"><a href="#cb1-223"></a>    <span class="op">.</span><span class="fu">attr</span>(<span class="st">"refX"</span><span class="op">,</span> <span class="dv">8</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"refY"</span><span class="op">,</span> <span class="dv">5</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"markerWidth"</span><span class="op">,</span> <span class="dv">7</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"markerHeight"</span><span class="op">,</span> <span class="dv">7</span>)</span>
+<span id="cb1-224"><a href="#cb1-224"></a>    <span class="op">.</span><span class="fu">attr</span>(<span class="st">"orient"</span><span class="op">,</span> <span class="st">"auto-start-reverse"</span>)</span>
+<span id="cb1-225"><a href="#cb1-225"></a>    <span class="op">.</span><span class="fu">append</span>(<span class="st">"path"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"d"</span><span class="op">,</span> <span class="st">"M0,0 L10,5 L0,10 z"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> <span class="st">"#2b2b2b"</span>)<span class="op">;</span></span>
+<span id="cb1-226"><a href="#cb1-226"></a>  svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"line"</span>)</span>
+<span id="cb1-227"><a href="#cb1-227"></a>    <span class="op">.</span><span class="fu">attr</span>(<span class="st">"x1"</span><span class="op">,</span> <span class="fu">sx</span>(aLo<span class="op">.</span><span class="at">x</span>))<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y1"</span><span class="op">,</span> <span class="fu">sy</span>(aLo<span class="op">.</span><span class="at">y</span>))</span>
+<span id="cb1-228"><a href="#cb1-228"></a>    <span class="op">.</span><span class="fu">attr</span>(<span class="st">"x2"</span><span class="op">,</span> <span class="fu">sx</span>(aHi<span class="op">.</span><span class="at">x</span>))<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y2"</span><span class="op">,</span> <span class="fu">sy</span>(aHi<span class="op">.</span><span class="at">y</span>))</span>
+<span id="cb1-229"><a href="#cb1-229"></a>    <span class="op">.</span><span class="fu">attr</span>(<span class="st">"stroke"</span><span class="op">,</span> <span class="st">"#2b2b2b"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"stroke-width"</span><span class="op">,</span> <span class="fl">2.5</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"marker-end"</span><span class="op">,</span> <span class="vs">`url(#</span><span class="sc">${</span>aid<span class="sc">}</span><span class="vs">)`</span>)<span class="op">;</span></span>
+<span id="cb1-230"><a href="#cb1-230"></a></span>
+<span id="cb1-231"><a href="#cb1-231"></a>  data<span class="op">.</span><span class="fu">forEach</span>((d<span class="op">,</span> i) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-232"><a href="#cb1-232"></a>    <span class="kw">const</span> t <span class="op">=</span> ts[i]<span class="op">;</span></span>
+<span id="cb1-233"><a href="#cb1-233"></a>    svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"circle"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"cx"</span><span class="op">,</span> <span class="fu">sx</span>(mx <span class="op">+</span> t <span class="op">*</span> dir<span class="op">.</span><span class="at">x</span>))<span class="op">.</span><span class="fu">attr</span>(<span class="st">"cy"</span><span class="op">,</span> <span class="fu">sy</span>(my <span class="op">+</span> t <span class="op">*</span> dir<span class="op">.</span><span class="at">y</span>))</span>
+<span id="cb1-234"><a href="#cb1-234"></a>      <span class="op">.</span><span class="fu">attr</span>(<span class="st">"r"</span><span class="op">,</span> <span class="dv">3</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> colors[d<span class="op">.</span><span class="at">g</span>])<span class="op">.</span><span class="fu">attr</span>(<span class="st">"opacity"</span><span class="op">,</span> <span class="fl">0.55</span>)<span class="op">;</span></span>
+<span id="cb1-235"><a href="#cb1-235"></a>  })<span class="op">;</span></span>
+<span id="cb1-236"><a href="#cb1-236"></a></span>
+<span id="cb1-237"><a href="#cb1-237"></a>  data<span class="op">.</span><span class="fu">forEach</span>(d <span class="kw">=&gt;</span> {</span>
+<span id="cb1-238"><a href="#cb1-238"></a>    svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"circle"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"cx"</span><span class="op">,</span> <span class="fu">sx</span>(d<span class="op">.</span><span class="at">x</span>))<span class="op">.</span><span class="fu">attr</span>(<span class="st">"cy"</span><span class="op">,</span> <span class="fu">sy</span>(d<span class="op">.</span><span class="at">y</span>))<span class="op">.</span><span class="fu">attr</span>(<span class="st">"r"</span><span class="op">,</span> <span class="fl">4.5</span>)</span>
+<span id="cb1-239"><a href="#cb1-239"></a>      <span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> colors[d<span class="op">.</span><span class="at">g</span>])<span class="op">.</span><span class="fu">attr</span>(<span class="st">"opacity"</span><span class="op">,</span> <span class="fl">0.9</span>)</span>
+<span id="cb1-240"><a href="#cb1-240"></a>      <span class="op">.</span><span class="fu">attr</span>(<span class="st">"stroke"</span><span class="op">,</span> <span class="st">"white"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"stroke-width"</span><span class="op">,</span> <span class="fl">0.8</span>)<span class="op">;</span></span>
+<span id="cb1-241"><a href="#cb1-241"></a>  })<span class="op">;</span></span>
+<span id="cb1-242"><a href="#cb1-242"></a></span>
+<span id="cb1-243"><a href="#cb1-243"></a>  svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"text"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"x"</span><span class="op">,</span> sx0)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y"</span><span class="op">,</span> <span class="dv">26</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"font-size"</span><span class="op">,</span> <span class="dv">15</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"font-weight"</span><span class="op">,</span> <span class="dv">700</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> <span class="st">"#333"</span>)</span>
+<span id="cb1-244"><a href="#cb1-244"></a>    <span class="op">.</span><span class="fu">text</span>(leftLabel)<span class="op">;</span></span>
+<span id="cb1-245"><a href="#cb1-245"></a></span>
+<span id="cb1-246"><a href="#cb1-246"></a>  <span class="kw">const</span> lg <span class="op">=</span> svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"g"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"transform"</span><span class="op">,</span> <span class="vs">`translate(</span><span class="sc">${</span>sx0 <span class="op">+</span> sW <span class="op">-</span> <span class="dv">150</span><span class="sc">}</span><span class="vs">,</span><span class="sc">${</span>sy0 <span class="op">+</span> <span class="dv">12</span><span class="sc">}</span><span class="vs">)`</span>)<span class="op">;</span></span>
+<span id="cb1-247"><a href="#cb1-247"></a>  names<span class="op">.</span><span class="fu">forEach</span>((nm<span class="op">,</span> i) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-248"><a href="#cb1-248"></a>    lg<span class="op">.</span><span class="fu">append</span>(<span class="st">"circle"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"cx"</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"cy"</span><span class="op">,</span> i <span class="op">*</span> <span class="dv">20</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"r"</span><span class="op">,</span> <span class="dv">6</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> colors[i])<span class="op">;</span></span>
+<span id="cb1-249"><a href="#cb1-249"></a>    lg<span class="op">.</span><span class="fu">append</span>(<span class="st">"text"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"x"</span><span class="op">,</span> <span class="dv">12</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y"</span><span class="op">,</span> i <span class="op">*</span> <span class="dv">20</span> <span class="op">+</span> <span class="dv">4</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"font-size"</span><span class="op">,</span> <span class="dv">13</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> <span class="st">"#333"</span>)<span class="op">.</span><span class="fu">text</span>(nm)<span class="op">;</span></span>
+<span id="cb1-250"><a href="#cb1-250"></a>  })<span class="op">;</span></span>
+<span id="cb1-251"><a href="#cb1-251"></a></span>
+<span id="cb1-252"><a href="#cb1-252"></a>  <span class="co">// ---- right: distribution after projecting ----</span></span>
+<span id="cb1-253"><a href="#cb1-253"></a>  <span class="kw">const</span> px0 <span class="op">=</span> <span class="dv">640</span><span class="op">,</span> py0 <span class="op">=</span> <span class="dv">40</span><span class="op">,</span> pW <span class="op">=</span> <span class="dv">330</span><span class="op">,</span> pH <span class="op">=</span> <span class="dv">300</span><span class="op">;</span></span>
+<span id="cb1-254"><a href="#cb1-254"></a>  svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"text"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"x"</span><span class="op">,</span> px0)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y"</span><span class="op">,</span> <span class="dv">26</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"font-size"</span><span class="op">,</span> <span class="dv">15</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"font-weight"</span><span class="op">,</span> <span class="dv">700</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> <span class="st">"#333"</span>)</span>
+<span id="cb1-255"><a href="#cb1-255"></a>    <span class="op">.</span><span class="fu">text</span>(<span class="st">"After projecting onto that line"</span>)<span class="op">;</span></span>
+<span id="cb1-256"><a href="#cb1-256"></a></span>
+<span id="cb1-257"><a href="#cb1-257"></a>  <span class="kw">const</span> tsc <span class="op">=</span> d3<span class="op">.</span><span class="fu">scaleLinear</span>()<span class="op">.</span><span class="fu">domain</span>([tmin <span class="op">-</span> tpad<span class="op">,</span> tmax <span class="op">+</span> tpad])<span class="op">.</span><span class="fu">range</span>([px0<span class="op">,</span> px0 <span class="op">+</span> pW])<span class="op">;</span></span>
+<span id="cb1-258"><a href="#cb1-258"></a>  svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"line"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"x1"</span><span class="op">,</span> px0)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y1"</span><span class="op">,</span> py0 <span class="op">+</span> pH)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"x2"</span><span class="op">,</span> px0 <span class="op">+</span> pW)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y2"</span><span class="op">,</span> py0 <span class="op">+</span> pH)</span>
+<span id="cb1-259"><a href="#cb1-259"></a>    <span class="op">.</span><span class="fu">attr</span>(<span class="st">"stroke"</span><span class="op">,</span> <span class="st">"rgba(0,0,0,0.3)"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"stroke-width"</span><span class="op">,</span> <span class="fl">1.5</span>)<span class="op">;</span></span>
+<span id="cb1-260"><a href="#cb1-260"></a></span>
+<span id="cb1-261"><a href="#cb1-261"></a>  <span class="kw">const</span> bw <span class="op">=</span> <span class="fl">0.45</span> <span class="op">*</span> (d3<span class="op">.</span><span class="fu">deviation</span>(ts) <span class="op">||</span> <span class="dv">1</span>)<span class="op">;</span></span>
+<span id="cb1-262"><a href="#cb1-262"></a>  <span class="kw">const</span> grid <span class="op">=</span> d3<span class="op">.</span><span class="fu">range</span>(<span class="dv">60</span>)<span class="op">.</span><span class="fu">map</span>(k <span class="kw">=&gt;</span> (tmin <span class="op">-</span> tpad) <span class="op">+</span> (k <span class="op">/</span> <span class="dv">59</span>) <span class="op">*</span> ((tmax <span class="op">+</span> tpad) <span class="op">-</span> (tmin <span class="op">-</span> tpad)))<span class="op">;</span></span>
+<span id="cb1-263"><a href="#cb1-263"></a>  <span class="kw">const</span> g0 <span class="op">=</span> <span class="fu">kde</span>(ts<span class="op">.</span><span class="fu">filter</span>((_<span class="op">,</span> i) <span class="kw">=&gt;</span> data[i]<span class="op">.</span><span class="at">g</span> <span class="op">===</span> <span class="dv">0</span>)<span class="op">,</span> bw<span class="op">,</span> grid)<span class="op">;</span></span>
+<span id="cb1-264"><a href="#cb1-264"></a>  <span class="kw">const</span> g1 <span class="op">=</span> <span class="fu">kde</span>(ts<span class="op">.</span><span class="fu">filter</span>((_<span class="op">,</span> i) <span class="kw">=&gt;</span> data[i]<span class="op">.</span><span class="at">g</span> <span class="op">===</span> <span class="dv">1</span>)<span class="op">,</span> bw<span class="op">,</span> grid)<span class="op">;</span></span>
+<span id="cb1-265"><a href="#cb1-265"></a>  <span class="kw">const</span> maxd <span class="op">=</span> d3<span class="op">.</span><span class="fu">max</span>([<span class="op">...</span>g0<span class="op">,</span> <span class="op">...</span>g1]<span class="op">,</span> d <span class="kw">=&gt;</span> d[<span class="dv">1</span>]) <span class="op">||</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb1-266"><a href="#cb1-266"></a>  <span class="kw">const</span> dsc <span class="op">=</span> d3<span class="op">.</span><span class="fu">scaleLinear</span>()<span class="op">.</span><span class="fu">domain</span>([<span class="dv">0</span><span class="op">,</span> maxd])<span class="op">.</span><span class="fu">range</span>([py0 <span class="op">+</span> pH<span class="op">,</span> py0 <span class="op">+</span> <span class="dv">44</span>])<span class="op">;</span></span>
+<span id="cb1-267"><a href="#cb1-267"></a></span>
+<span id="cb1-268"><a href="#cb1-268"></a>  <span class="kw">const</span> area <span class="op">=</span> d3<span class="op">.</span><span class="fu">area</span>()<span class="op">.</span><span class="fu">x</span>(d <span class="kw">=&gt;</span> <span class="fu">tsc</span>(d[<span class="dv">0</span>]))<span class="op">.</span><span class="fu">y0</span>(py0 <span class="op">+</span> pH)<span class="op">.</span><span class="fu">y1</span>(d <span class="kw">=&gt;</span> <span class="fu">dsc</span>(d[<span class="dv">1</span>]))<span class="op">.</span><span class="fu">curve</span>(d3<span class="op">.</span><span class="at">curveBasis</span>)<span class="op">;</span></span>
+<span id="cb1-269"><a href="#cb1-269"></a>  svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"path"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"d"</span><span class="op">,</span> <span class="fu">area</span>(g0))<span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> colors[<span class="dv">0</span>])<span class="op">.</span><span class="fu">attr</span>(<span class="st">"opacity"</span><span class="op">,</span> <span class="fl">0.45</span>)<span class="op">;</span></span>
+<span id="cb1-270"><a href="#cb1-270"></a>  svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"path"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"d"</span><span class="op">,</span> <span class="fu">area</span>(g1))<span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> colors[<span class="dv">1</span>])<span class="op">.</span><span class="fu">attr</span>(<span class="st">"opacity"</span><span class="op">,</span> <span class="fl">0.45</span>)<span class="op">;</span></span>
+<span id="cb1-271"><a href="#cb1-271"></a></span>
+<span id="cb1-272"><a href="#cb1-272"></a>  <span class="kw">const</span> lineg <span class="op">=</span> d3<span class="op">.</span><span class="fu">line</span>()<span class="op">.</span><span class="fu">x</span>(d <span class="kw">=&gt;</span> <span class="fu">tsc</span>(d[<span class="dv">0</span>]))<span class="op">.</span><span class="fu">y</span>(d <span class="kw">=&gt;</span> <span class="fu">dsc</span>(d[<span class="dv">1</span>]))<span class="op">.</span><span class="fu">curve</span>(d3<span class="op">.</span><span class="at">curveBasis</span>)<span class="op">;</span></span>
+<span id="cb1-273"><a href="#cb1-273"></a>  svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"path"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"d"</span><span class="op">,</span> <span class="fu">lineg</span>(g0))<span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> <span class="st">"none"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"stroke"</span><span class="op">,</span> colors[<span class="dv">0</span>])<span class="op">.</span><span class="fu">attr</span>(<span class="st">"stroke-width"</span><span class="op">,</span> <span class="dv">2</span>)<span class="op">;</span></span>
+<span id="cb1-274"><a href="#cb1-274"></a>  svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"path"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"d"</span><span class="op">,</span> <span class="fu">lineg</span>(g1))<span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> <span class="st">"none"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"stroke"</span><span class="op">,</span> colors[<span class="dv">1</span>])<span class="op">.</span><span class="fu">attr</span>(<span class="st">"stroke-width"</span><span class="op">,</span> <span class="dv">2</span>)<span class="op">;</span></span>
+<span id="cb1-275"><a href="#cb1-275"></a></span>
+<span id="cb1-276"><a href="#cb1-276"></a>  data<span class="op">.</span><span class="fu">forEach</span>((d<span class="op">,</span> i) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-277"><a href="#cb1-277"></a>    svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"line"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"x1"</span><span class="op">,</span> <span class="fu">tsc</span>(ts[i]))<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y1"</span><span class="op">,</span> py0 <span class="op">+</span> pH)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"x2"</span><span class="op">,</span> <span class="fu">tsc</span>(ts[i]))<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y2"</span><span class="op">,</span> py0 <span class="op">+</span> pH <span class="op">-</span> <span class="dv">7</span>)</span>
+<span id="cb1-278"><a href="#cb1-278"></a>      <span class="op">.</span><span class="fu">attr</span>(<span class="st">"stroke"</span><span class="op">,</span> colors[d<span class="op">.</span><span class="at">g</span>])<span class="op">.</span><span class="fu">attr</span>(<span class="st">"stroke-width"</span><span class="op">,</span> <span class="dv">1</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"opacity"</span><span class="op">,</span> <span class="fl">0.5</span>)<span class="op">;</span></span>
+<span id="cb1-279"><a href="#cb1-279"></a>  })<span class="op">;</span></span>
+<span id="cb1-280"><a href="#cb1-280"></a></span>
+<span id="cb1-281"><a href="#cb1-281"></a>  <span class="co">// live separation readout</span></span>
+<span id="cb1-282"><a href="#cb1-282"></a>  <span class="kw">const</span> sep <span class="op">=</span> <span class="fu">separation</span>(ts)<span class="op">;</span></span>
+<span id="cb1-283"><a href="#cb1-283"></a>  svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"text"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"x"</span><span class="op">,</span> px0 <span class="op">+</span> pW)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y"</span><span class="op">,</span> py0 <span class="op">+</span> <span class="dv">16</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"text-anchor"</span><span class="op">,</span> <span class="st">"end"</span>)</span>
+<span id="cb1-284"><a href="#cb1-284"></a>    <span class="op">.</span><span class="fu">attr</span>(<span class="st">"font-size"</span><span class="op">,</span> <span class="dv">14</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"font-weight"</span><span class="op">,</span> <span class="dv">800</span>)</span>
+<span id="cb1-285"><a href="#cb1-285"></a>    <span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> sep <span class="op">&gt;</span> <span class="fl">1.2</span> <span class="op">?</span> <span class="st">"#007E5A"</span> <span class="op">:</span> <span class="st">"#b06a1f"</span>)</span>
+<span id="cb1-286"><a href="#cb1-286"></a>    <span class="op">.</span><span class="fu">text</span>(<span class="vs">`Group separation: </span><span class="sc">${</span>sep<span class="op">.</span><span class="fu">toFixed</span>(<span class="dv">2</span>)<span class="sc">}</span><span class="vs">`</span>)<span class="op">;</span></span>
+<span id="cb1-287"><a href="#cb1-287"></a></span>
+<span id="cb1-288"><a href="#cb1-288"></a>  <span class="cf">return</span> svg<span class="op">.</span><span class="fu">node</span>()<span class="op">;</span></span>
+<span id="cb1-289"><a href="#cb1-289"></a>}</span>
+<span id="cb1-290"><a href="#cb1-290"></a></span>
+<span id="cb1-291"><a href="#cb1-291"></a>panel <span class="op">=</span> <span class="kw">function</span> (method) {</span>
+<span id="cb1-292"><a href="#cb1-292"></a>  <span class="cf">return</span> method <span class="op">===</span> <span class="st">"pca"</span></span>
+<span id="cb1-293"><a href="#cb1-293"></a>    <span class="op">?</span> <span class="fu">figure</span>(pcaDir<span class="op">,</span> <span class="st">"PC₁ direction (most variation)"</span>)</span>
+<span id="cb1-294"><a href="#cb1-294"></a>    <span class="op">:</span> <span class="fu">figure</span>(plsDir<span class="op">,</span> <span class="st">"PLS₁ direction (linked to outcome)"</span>)<span class="op">;</span></span>
+<span id="cb1-295"><a href="#cb1-295"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-1" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-2" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-3" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-4" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-5" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-6" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-7" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-8" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-9" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-10" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-11" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code hidden" id="cb2" data-startfrom="298" data-source-offset="0"><pre class="sourceCode numberSource js number-lines code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 297;"><span id="cb2-298"><a href="#cb2-298"></a>heatmap <span class="op">=</span> {</span>
+<span id="cb2-299"><a href="#cb2-299"></a>  <span class="kw">const</span> cols <span class="op">=</span> <span class="dv">44</span><span class="op">,</span> rows <span class="op">=</span> <span class="dv">16</span><span class="op">;</span></span>
+<span id="cb2-300"><a href="#cb2-300"></a>  <span class="kw">const</span> rng <span class="op">=</span> <span class="fu">makeRng</span>(<span class="dv">7</span>)<span class="op">;</span></span>
+<span id="cb2-301"><a href="#cb2-301"></a>  <span class="kw">const</span> W <span class="op">=</span> <span class="dv">920</span><span class="op">,</span> H <span class="op">=</span> <span class="dv">250</span><span class="op">,</span> pad <span class="op">=</span> { <span class="dt">t</span><span class="op">:</span> <span class="dv">34</span><span class="op">,</span> <span class="dt">r</span><span class="op">:</span> <span class="dv">20</span><span class="op">,</span> <span class="dt">b</span><span class="op">:</span> <span class="dv">24</span><span class="op">,</span> <span class="dt">l</span><span class="op">:</span> <span class="dv">60</span> }<span class="op">;</span></span>
+<span id="cb2-302"><a href="#cb2-302"></a>  <span class="kw">const</span> cw <span class="op">=</span> (W <span class="op">-</span> pad<span class="op">.</span><span class="at">l</span> <span class="op">-</span> pad<span class="op">.</span><span class="at">r</span>) <span class="op">/</span> cols<span class="op">,</span> ch <span class="op">=</span> (H <span class="op">-</span> pad<span class="op">.</span><span class="at">t</span> <span class="op">-</span> pad<span class="op">.</span><span class="at">b</span>) <span class="op">/</span> rows<span class="op">;</span></span>
+<span id="cb2-303"><a href="#cb2-303"></a>  <span class="kw">const</span> color <span class="op">=</span> d3<span class="op">.</span><span class="fu">scaleSequential</span>(d3<span class="op">.</span><span class="at">interpolateOranges</span>)<span class="op">.</span><span class="fu">domain</span>([<span class="dv">0</span><span class="op">,</span> <span class="dv">1</span>])<span class="op">;</span></span>
+<span id="cb2-304"><a href="#cb2-304"></a></span>
+<span id="cb2-305"><a href="#cb2-305"></a>  <span class="kw">const</span> svg <span class="op">=</span> d3<span class="op">.</span><span class="fu">create</span>(<span class="st">"svg"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"viewBox"</span><span class="op">,</span> <span class="vs">`0 0 </span><span class="sc">${</span>W<span class="sc">}</span><span class="vs"> </span><span class="sc">${</span>H<span class="sc">}</span><span class="vs">`</span>)</span>
+<span id="cb2-306"><a href="#cb2-306"></a>    <span class="op">.</span><span class="fu">style</span>(<span class="st">"width"</span><span class="op">,</span> <span class="st">"100%"</span>)<span class="op">.</span><span class="fu">style</span>(<span class="st">"height"</span><span class="op">,</span> <span class="st">"auto"</span>)<span class="op">.</span><span class="fu">style</span>(<span class="st">"font-family"</span><span class="op">,</span> <span class="st">"inherit"</span>)<span class="op">;</span></span>
+<span id="cb2-307"><a href="#cb2-307"></a></span>
+<span id="cb2-308"><a href="#cb2-308"></a>  <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> rows<span class="op">;</span> i<span class="op">++</span>)</span>
+<span id="cb2-309"><a href="#cb2-309"></a>    <span class="cf">for</span> (<span class="kw">let</span> j <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> j <span class="op">&lt;</span> cols<span class="op">;</span> j<span class="op">++</span>)</span>
+<span id="cb2-310"><a href="#cb2-310"></a>      svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"rect"</span>)</span>
+<span id="cb2-311"><a href="#cb2-311"></a>        <span class="op">.</span><span class="fu">attr</span>(<span class="st">"x"</span><span class="op">,</span> pad<span class="op">.</span><span class="at">l</span> <span class="op">+</span> j <span class="op">*</span> cw)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y"</span><span class="op">,</span> pad<span class="op">.</span><span class="at">t</span> <span class="op">+</span> i <span class="op">*</span> ch)</span>
+<span id="cb2-312"><a href="#cb2-312"></a>        <span class="op">.</span><span class="fu">attr</span>(<span class="st">"width"</span><span class="op">,</span> cw <span class="op">-</span> <span class="dv">1</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"height"</span><span class="op">,</span> ch <span class="op">-</span> <span class="dv">1</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"rx"</span><span class="op">,</span> <span class="dv">1</span>)</span>
+<span id="cb2-313"><a href="#cb2-313"></a>        <span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> <span class="fu">color</span>(<span class="bu">Math</span><span class="op">.</span><span class="fu">pow</span>(<span class="fu">rng</span>()<span class="op">,</span> <span class="fl">1.4</span>)))<span class="op">;</span></span>
+<span id="cb2-314"><a href="#cb2-314"></a></span>
+<span id="cb2-315"><a href="#cb2-315"></a>  svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"text"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"x"</span><span class="op">,</span> pad<span class="op">.</span><span class="at">l</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y"</span><span class="op">,</span> <span class="dv">22</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"font-weight"</span><span class="op">,</span> <span class="dv">700</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"font-size"</span><span class="op">,</span> <span class="dv">15</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> <span class="st">"#333"</span>)</span>
+<span id="cb2-316"><a href="#cb2-316"></a>    <span class="op">.</span><span class="fu">text</span>(<span class="st">"metabolites  (thousands of columns →)"</span>)<span class="op">;</span></span>
+<span id="cb2-317"><a href="#cb2-317"></a>  <span class="kw">const</span> cy <span class="op">=</span> pad<span class="op">.</span><span class="at">t</span> <span class="op">+</span> (H <span class="op">-</span> pad<span class="op">.</span><span class="at">t</span> <span class="op">-</span> pad<span class="op">.</span><span class="at">b</span>) <span class="op">/</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb2-318"><a href="#cb2-318"></a>  svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"text"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"x"</span><span class="op">,</span> <span class="dv">16</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y"</span><span class="op">,</span> cy)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"transform"</span><span class="op">,</span> <span class="vs">`rotate(-90 16 </span><span class="sc">${</span>cy<span class="sc">}</span><span class="vs">)`</span>)</span>
+<span id="cb2-319"><a href="#cb2-319"></a>    <span class="op">.</span><span class="fu">attr</span>(<span class="st">"text-anchor"</span><span class="op">,</span> <span class="st">"middle"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"font-weight"</span><span class="op">,</span> <span class="dv">700</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"font-size"</span><span class="op">,</span> <span class="dv">15</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> <span class="st">"#333"</span>)</span>
+<span id="cb2-320"><a href="#cb2-320"></a>    <span class="op">.</span><span class="fu">text</span>(<span class="st">"samples ↓"</span>)<span class="op">;</span></span>
+<span id="cb2-321"><a href="#cb2-321"></a></span>
+<span id="cb2-322"><a href="#cb2-322"></a>  <span class="cf">return</span> svg<span class="op">.</span><span class="fu">node</span>()<span class="op">;</span></span>
+<span id="cb2-323"><a href="#cb2-323"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-2" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+</section>
+<section id="challenge" class="slide level2">
+<h2>The challenge</h2>
+<p>A table with thousands of columns is very difficult to read directly, we just can’t eyeball patterns across that many measurements.</p>
+<p>We want to squeeze thousands of numbers into a few meaningful directions that still capture what’s going on. We will perform this using matrix decomposition.</p>
+<p><br></p>
+<div class="cell">
+<div class="sourceCode cell-code hidden" id="cb3" data-startfrom="338" data-source-offset="-54"><pre class="sourceCode numberSource js number-lines code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 337;"><span id="cb3-338"><a href="#cb3-338"></a>decomp <span class="op">=</span> {</span>
+<span id="cb3-339"><a href="#cb3-339"></a>  <span class="kw">const</span> n <span class="op">=</span> <span class="dv">24</span><span class="op">,</span> p <span class="op">=</span> <span class="dv">56</span><span class="op">,</span> R <span class="op">=</span> <span class="dv">6</span><span class="op">;</span></span>
+<span id="cb3-340"><a href="#cb3-340"></a>  <span class="kw">const</span> rng <span class="op">=</span> (() <span class="kw">=&gt;</span> { <span class="kw">let</span> s <span class="op">=</span> <span class="dv">11</span> <span class="op">&gt;&gt;&gt;</span> <span class="dv">0</span><span class="op">;</span> <span class="cf">return</span> () <span class="kw">=&gt;</span> { s <span class="op">=</span> (s <span class="op">+</span> <span class="bn">0x6d2b79f5</span>) <span class="op">&gt;&gt;&gt;</span> <span class="dv">0</span><span class="op">;</span> <span class="kw">let</span> t <span class="op">=</span> s<span class="op">;</span> t <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">imul</span>(t <span class="op">^</span> (t <span class="op">&gt;&gt;&gt;</span> <span class="dv">15</span>)<span class="op">,</span> <span class="dv">1</span> <span class="op">|</span> t)<span class="op">;</span> t <span class="op">^=</span> t <span class="op">+</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">imul</span>(t <span class="op">^</span> (t <span class="op">&gt;&gt;&gt;</span> <span class="dv">7</span>)<span class="op">,</span> <span class="dv">61</span> <span class="op">|</span> t)<span class="op">;</span> <span class="cf">return</span> ((t <span class="op">^</span> (t <span class="op">&gt;&gt;&gt;</span> <span class="dv">14</span>)) <span class="op">&gt;&gt;&gt;</span> <span class="dv">0</span>) <span class="op">/</span> <span class="dv">4294967296</span><span class="op">;</span> }<span class="op">;</span> })()<span class="op">;</span></span>
+<span id="cb3-341"><a href="#cb3-341"></a>  <span class="kw">const</span> s <span class="op">=</span> [<span class="dv">9</span><span class="op">,</span> <span class="dv">6</span><span class="op">,</span> <span class="fl">4.5</span><span class="op">,</span> <span class="dv">3</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="fl">1.2</span>]<span class="op">;</span></span>
+<span id="cb3-342"><a href="#cb3-342"></a>  <span class="kw">const</span> U <span class="op">=</span> []<span class="op">,</span> V <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb3-343"><a href="#cb3-343"></a>  <span class="cf">for</span> (<span class="kw">let</span> r <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> r <span class="op">&lt;</span> R<span class="op">;</span> r<span class="op">++</span>) {</span>
+<span id="cb3-344"><a href="#cb3-344"></a>    <span class="kw">const</span> ph <span class="op">=</span> <span class="fu">rng</span>() <span class="op">*</span> <span class="bu">Math</span><span class="op">.</span><span class="cn">PI</span> <span class="op">*</span> <span class="dv">2</span><span class="op">,</span> ph2 <span class="op">=</span> <span class="fu">rng</span>() <span class="op">*</span> <span class="bu">Math</span><span class="op">.</span><span class="cn">PI</span> <span class="op">*</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb3-345"><a href="#cb3-345"></a>    <span class="kw">const</span> ur <span class="op">=</span> []<span class="op">,</span> vr <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb3-346"><a href="#cb3-346"></a>    <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> n<span class="op">;</span> i<span class="op">++</span>) ur<span class="op">.</span><span class="fu">push</span>(<span class="bu">Math</span><span class="op">.</span><span class="fu">cos</span>(<span class="bu">Math</span><span class="op">.</span><span class="cn">PI</span> <span class="op">*</span> (r <span class="op">+</span> <span class="dv">1</span>) <span class="op">*</span> i <span class="op">/</span> n <span class="op">+</span> ph))<span class="op">;</span></span>
+<span id="cb3-347"><a href="#cb3-347"></a>    <span class="cf">for</span> (<span class="kw">let</span> j <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> j <span class="op">&lt;</span> p<span class="op">;</span> j<span class="op">++</span>) vr<span class="op">.</span><span class="fu">push</span>(<span class="bu">Math</span><span class="op">.</span><span class="fu">cos</span>(<span class="bu">Math</span><span class="op">.</span><span class="cn">PI</span> <span class="op">*</span> (r <span class="op">+</span> <span class="dv">1</span>) <span class="op">*</span> j <span class="op">/</span> (p <span class="op">/</span> <span class="dv">3</span>) <span class="op">+</span> ph2))<span class="op">;</span></span>
+<span id="cb3-348"><a href="#cb3-348"></a>    <span class="kw">const</span> nu <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">hypot</span>(<span class="op">...</span>ur) <span class="op">||</span> <span class="dv">1</span><span class="op">,</span> nv <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">hypot</span>(<span class="op">...</span>vr) <span class="op">||</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb3-349"><a href="#cb3-349"></a>    U<span class="op">.</span><span class="fu">push</span>(ur<span class="op">.</span><span class="fu">map</span>(x <span class="kw">=&gt;</span> x <span class="op">/</span> nu))<span class="op">;</span> V<span class="op">.</span><span class="fu">push</span>(vr<span class="op">.</span><span class="fu">map</span>(x <span class="kw">=&gt;</span> x <span class="op">/</span> nv))<span class="op">;</span></span>
+<span id="cb3-350"><a href="#cb3-350"></a>  }</span>
+<span id="cb3-351"><a href="#cb3-351"></a>  <span class="kw">const</span> noise <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb3-352"><a href="#cb3-352"></a>  <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> n<span class="op">;</span> i<span class="op">++</span>) { <span class="kw">const</span> row <span class="op">=</span> []<span class="op">;</span> <span class="cf">for</span> (<span class="kw">let</span> j <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> j <span class="op">&lt;</span> p<span class="op">;</span> j<span class="op">++</span>) row<span class="op">.</span><span class="fu">push</span>(<span class="fl">0.04</span> <span class="op">*</span> (<span class="fu">rng</span>() <span class="op">*</span> <span class="dv">2</span> <span class="op">-</span> <span class="dv">1</span>))<span class="op">;</span> noise<span class="op">.</span><span class="fu">push</span>(row)<span class="op">;</span> }</span>
+<span id="cb3-353"><a href="#cb3-353"></a>  <span class="kw">const</span> M <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb3-354"><a href="#cb3-354"></a>  <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> n<span class="op">;</span> i<span class="op">++</span>) { <span class="kw">const</span> row <span class="op">=</span> []<span class="op">;</span> <span class="cf">for</span> (<span class="kw">let</span> j <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> j <span class="op">&lt;</span> p<span class="op">;</span> j<span class="op">++</span>) { <span class="kw">let</span> v <span class="op">=</span> noise[i][j]<span class="op">;</span> <span class="cf">for</span> (<span class="kw">let</span> r <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> r <span class="op">&lt;</span> R<span class="op">;</span> r<span class="op">++</span>) v <span class="op">+=</span> s[r] <span class="op">*</span> U[r][i] <span class="op">*</span> V[r][j]<span class="op">;</span> row<span class="op">.</span><span class="fu">push</span>(v)<span class="op">;</span> } M<span class="op">.</span><span class="fu">push</span>(row)<span class="op">;</span> }</span>
+<span id="cb3-355"><a href="#cb3-355"></a>  <span class="kw">const</span> maxAbs <span class="op">=</span> d3<span class="op">.</span><span class="fu">max</span>(M<span class="op">.</span><span class="fu">flat</span>()<span class="op">,</span> v <span class="kw">=&gt;</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">abs</span>(v))<span class="op">;</span></span>
+<span id="cb3-356"><a href="#cb3-356"></a>  <span class="kw">const</span> uMax <span class="op">=</span> d3<span class="op">.</span><span class="fu">max</span>(U<span class="op">.</span><span class="fu">flat</span>()<span class="op">,</span> v <span class="kw">=&gt;</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">abs</span>(v)) <span class="op">||</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb3-357"><a href="#cb3-357"></a>  <span class="kw">const</span> vMax <span class="op">=</span> d3<span class="op">.</span><span class="fu">max</span>(V<span class="op">.</span><span class="fu">flat</span>()<span class="op">,</span> v <span class="kw">=&gt;</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">abs</span>(v)) <span class="op">||</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb3-358"><a href="#cb3-358"></a>  <span class="kw">const</span> totalEnergy <span class="op">=</span> s<span class="op">.</span><span class="fu">reduce</span>((a<span class="op">,</span> b) <span class="kw">=&gt;</span> a <span class="op">+</span> b <span class="op">*</span> b<span class="op">,</span> <span class="dv">0</span>) <span class="op">+</span> d3<span class="op">.</span><span class="fu">sum</span>(noise<span class="op">.</span><span class="fu">flat</span>()<span class="op">,</span> v <span class="kw">=&gt;</span> v <span class="op">*</span> v)<span class="op">;</span></span>
+<span id="cb3-359"><a href="#cb3-359"></a>  <span class="cf">return</span> { n<span class="op">,</span> p<span class="op">,</span> R<span class="op">,</span> s<span class="op">,</span> U<span class="op">,</span> V<span class="op">,</span> M<span class="op">,</span> maxAbs<span class="op">,</span> uMax<span class="op">,</span> vMax<span class="op">,</span> totalEnergy }<span class="op">;</span></span>
+<span id="cb3-360"><a href="#cb3-360"></a>}</span>
+<span id="cb3-361"><a href="#cb3-361"></a></span>
+<span id="cb3-362"><a href="#cb3-362"></a>recon <span class="op">=</span> <span class="kw">function</span> (k) {</span>
+<span id="cb3-363"><a href="#cb3-363"></a>  <span class="kw">const</span> { n<span class="op">,</span> p<span class="op">,</span> U<span class="op">,</span> V<span class="op">,</span> s } <span class="op">=</span> decomp<span class="op">;</span></span>
+<span id="cb3-364"><a href="#cb3-364"></a>  <span class="kw">const</span> out <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb3-365"><a href="#cb3-365"></a>  <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> n<span class="op">;</span> i<span class="op">++</span>) { <span class="kw">const</span> row <span class="op">=</span> []<span class="op">;</span> <span class="cf">for</span> (<span class="kw">let</span> j <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> j <span class="op">&lt;</span> p<span class="op">;</span> j<span class="op">++</span>) { <span class="kw">let</span> v <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> <span class="cf">for</span> (<span class="kw">let</span> r <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> r <span class="op">&lt;</span> k<span class="op">;</span> r<span class="op">++</span>) v <span class="op">+=</span> s[r] <span class="op">*</span> U[r][i] <span class="op">*</span> V[r][j]<span class="op">;</span> row<span class="op">.</span><span class="fu">push</span>(v)<span class="op">;</span> } out<span class="op">.</span><span class="fu">push</span>(row)<span class="op">;</span> }</span>
+<span id="cb3-366"><a href="#cb3-366"></a>  <span class="cf">return</span> out<span class="op">;</span></span>
+<span id="cb3-367"><a href="#cb3-367"></a>}</span>
+<span id="cb3-368"><a href="#cb3-368"></a></span>
+<span id="cb3-369"><a href="#cb3-369"></a>decompColor <span class="op">=</span> d3<span class="op">.</span><span class="fu">scaleSequential</span>(d3<span class="op">.</span><span class="fu">interpolateRgbBasis</span>([<span class="st">"#0a7d63"</span><span class="op">,</span> <span class="st">"#f4f1ec"</span><span class="op">,</span> <span class="st">"#E78824"</span>]))<span class="op">.</span><span class="fu">domain</span>([<span class="op">-</span>decomp<span class="op">.</span><span class="at">maxAbs</span><span class="op">,</span> decomp<span class="op">.</span><span class="at">maxAbs</span>])</span>
+<span id="cb3-370"><a href="#cb3-370"></a>factorColor <span class="op">=</span> d3<span class="op">.</span><span class="fu">scaleSequential</span>(d3<span class="op">.</span><span class="fu">interpolateRgbBasis</span>([<span class="st">"#0a7d63"</span><span class="op">,</span> <span class="st">"#f4f1ec"</span><span class="op">,</span> <span class="st">"#E78824"</span>]))<span class="op">.</span><span class="fu">domain</span>([<span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span>])</span>
+<span id="cb3-371"><a href="#cb3-371"></a></span>
+<span id="cb3-372"><a href="#cb3-372"></a>drawDecomp <span class="op">=</span> <span class="kw">function</span> (k) {</span>
+<span id="cb3-373"><a href="#cb3-373"></a>  <span class="kw">const</span> { n<span class="op">,</span> p<span class="op">,</span> M<span class="op">,</span> U<span class="op">,</span> V<span class="op">,</span> s<span class="op">,</span> uMax<span class="op">,</span> vMax<span class="op">,</span> totalEnergy } <span class="op">=</span> decomp<span class="op">;</span></span>
+<span id="cb3-374"><a href="#cb3-374"></a>  <span class="kw">const</span> cw <span class="op">=</span> <span class="dv">5</span><span class="op">,</span> W <span class="op">=</span> <span class="dv">1000</span><span class="op">,</span> H <span class="op">=</span> <span class="dv">240</span><span class="op">;</span></span>
+<span id="cb3-375"><a href="#cb3-375"></a>  <span class="kw">const</span> Mk <span class="op">=</span> <span class="fu">recon</span>(k)<span class="op">;</span></span>
+<span id="cb3-376"><a href="#cb3-376"></a>  <span class="kw">const</span> svg <span class="op">=</span> d3<span class="op">.</span><span class="fu">create</span>(<span class="st">"svg"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"viewBox"</span><span class="op">,</span> <span class="vs">`0 0 </span><span class="sc">${</span>W<span class="sc">}</span><span class="vs"> </span><span class="sc">${</span>H<span class="sc">}</span><span class="vs">`</span>)</span>
+<span id="cb3-377"><a href="#cb3-377"></a>    <span class="op">.</span><span class="fu">style</span>(<span class="st">"width"</span><span class="op">,</span> <span class="st">"100%"</span>)<span class="op">.</span><span class="fu">style</span>(<span class="st">"height"</span><span class="op">,</span> <span class="st">"auto"</span>)<span class="op">.</span><span class="fu">style</span>(<span class="st">"font-family"</span><span class="op">,</span> <span class="st">"inherit"</span>)<span class="op">;</span></span>
+<span id="cb3-378"><a href="#cb3-378"></a></span>
+<span id="cb3-379"><a href="#cb3-379"></a>  <span class="kw">const</span> block <span class="op">=</span> (get<span class="op">,</span> rows<span class="op">,</span> cols<span class="op">,</span> x<span class="op">,</span> y<span class="op">,</span> color) <span class="kw">=&gt;</span> {</span>
+<span id="cb3-380"><a href="#cb3-380"></a>    <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> rows<span class="op">;</span> i<span class="op">++</span>) <span class="cf">for</span> (<span class="kw">let</span> j <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> j <span class="op">&lt;</span> cols<span class="op">;</span> j<span class="op">++</span>)</span>
+<span id="cb3-381"><a href="#cb3-381"></a>      svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"rect"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"x"</span><span class="op">,</span> x <span class="op">+</span> j <span class="op">*</span> cw)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y"</span><span class="op">,</span> y <span class="op">+</span> i <span class="op">*</span> cw)</span>
+<span id="cb3-382"><a href="#cb3-382"></a>        <span class="op">.</span><span class="fu">attr</span>(<span class="st">"width"</span><span class="op">,</span> cw <span class="op">-</span> <span class="fl">0.4</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"height"</span><span class="op">,</span> cw <span class="op">-</span> <span class="fl">0.4</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> <span class="fu">color</span>(<span class="fu">get</span>(i<span class="op">,</span> j)))<span class="op">;</span></span>
+<span id="cb3-383"><a href="#cb3-383"></a>  }<span class="op">;</span></span>
+<span id="cb3-384"><a href="#cb3-384"></a>  <span class="kw">const</span> txt <span class="op">=</span> (t<span class="op">,</span> x<span class="op">,</span> y<span class="op">,</span> o <span class="op">=</span> {}) <span class="kw">=&gt;</span> svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"text"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"x"</span><span class="op">,</span> x)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y"</span><span class="op">,</span> y)</span>
+<span id="cb3-385"><a href="#cb3-385"></a>    <span class="op">.</span><span class="fu">attr</span>(<span class="st">"font-size"</span><span class="op">,</span> o<span class="op">.</span><span class="at">size</span> <span class="op">||</span> <span class="dv">13</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"font-weight"</span><span class="op">,</span> o<span class="op">.</span><span class="at">w</span> <span class="op">||</span> <span class="dv">700</span>)</span>
+<span id="cb3-386"><a href="#cb3-386"></a>    <span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> o<span class="op">.</span><span class="at">fill</span> <span class="op">||</span> <span class="st">"#333"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"text-anchor"</span><span class="op">,</span> o<span class="op">.</span><span class="at">anchor</span> <span class="op">||</span> <span class="st">"start"</span>)<span class="op">.</span><span class="fu">text</span>(t)<span class="op">;</span></span>
+<span id="cb3-387"><a href="#cb3-387"></a></span>
+<span id="cb3-388"><a href="#cb3-388"></a>  <span class="kw">const</span> y0 <span class="op">=</span> <span class="dv">44</span><span class="op">;</span></span>
+<span id="cb3-389"><a href="#cb3-389"></a>  <span class="fu">txt</span>(<span class="st">"M  (n × p)"</span><span class="op">,</span> <span class="dv">10</span><span class="op">,</span> y0 <span class="op">-</span> <span class="dv">8</span>)<span class="op">;</span></span>
+<span id="cb3-390"><a href="#cb3-390"></a>  <span class="fu">block</span>((i<span class="op">,</span> j) <span class="kw">=&gt;</span> M[i][j]<span class="op">,</span> n<span class="op">,</span> p<span class="op">,</span> <span class="dv">10</span><span class="op">,</span> y0<span class="op">,</span> decompColor)<span class="op">;</span></span>
+<span id="cb3-391"><a href="#cb3-391"></a></span>
+<span id="cb3-392"><a href="#cb3-392"></a>  <span class="fu">txt</span>(<span class="st">"≈"</span><span class="op">,</span> <span class="dv">10</span> <span class="op">+</span> p <span class="op">*</span> cw <span class="op">+</span> <span class="dv">12</span><span class="op">,</span> y0 <span class="op">+</span> n <span class="op">*</span> cw <span class="op">/</span> <span class="dv">2</span> <span class="op">+</span> <span class="dv">6</span><span class="op">,</span> { <span class="dt">size</span><span class="op">:</span> <span class="dv">24</span><span class="op">,</span> <span class="dt">w</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span> <span class="dt">anchor</span><span class="op">:</span> <span class="st">"middle"</span> })<span class="op">;</span></span>
+<span id="cb3-393"><a href="#cb3-393"></a></span>
+<span id="cb3-394"><a href="#cb3-394"></a>  <span class="kw">const</span> xU <span class="op">=</span> <span class="dv">10</span> <span class="op">+</span> p <span class="op">*</span> cw <span class="op">+</span> <span class="dv">34</span><span class="op">;</span></span>
+<span id="cb3-395"><a href="#cb3-395"></a>  <span class="fu">txt</span>(<span class="st">"U"</span><span class="op">,</span> xU<span class="op">,</span> y0 <span class="op">-</span> <span class="dv">8</span>)<span class="op">;</span></span>
+<span id="cb3-396"><a href="#cb3-396"></a>  <span class="fu">block</span>((i<span class="op">,</span> r) <span class="kw">=&gt;</span> U[r][i] <span class="op">/</span> uMax<span class="op">,</span> n<span class="op">,</span> k<span class="op">,</span> xU<span class="op">,</span> y0<span class="op">,</span> factorColor)<span class="op">;</span></span>
+<span id="cb3-397"><a href="#cb3-397"></a></span>
+<span id="cb3-398"><a href="#cb3-398"></a>  <span class="kw">const</span> xMul <span class="op">=</span> xU <span class="op">+</span> k <span class="op">*</span> cw <span class="op">+</span> <span class="dv">8</span><span class="op">;</span></span>
+<span id="cb3-399"><a href="#cb3-399"></a>  <span class="fu">txt</span>(<span class="st">"×"</span><span class="op">,</span> xMul<span class="op">,</span> y0 <span class="op">+</span> n <span class="op">*</span> cw <span class="op">/</span> <span class="dv">2</span> <span class="op">+</span> <span class="dv">5</span><span class="op">,</span> { <span class="dt">size</span><span class="op">:</span> <span class="dv">18</span><span class="op">,</span> <span class="dt">w</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span> <span class="dt">anchor</span><span class="op">:</span> <span class="st">"middle"</span> })<span class="op">;</span></span>
+<span id="cb3-400"><a href="#cb3-400"></a></span>
+<span id="cb3-401"><a href="#cb3-401"></a>  <span class="kw">const</span> xV <span class="op">=</span> xMul <span class="op">+</span> <span class="dv">14</span><span class="op">;</span></span>
+<span id="cb3-402"><a href="#cb3-402"></a>  <span class="fu">txt</span>(<span class="st">"V"</span><span class="op">,</span> xV<span class="op">,</span> y0 <span class="op">-</span> <span class="dv">8</span>)<span class="op">;</span></span>
+<span id="cb3-403"><a href="#cb3-403"></a>  <span class="fu">block</span>((r<span class="op">,</span> j) <span class="kw">=&gt;</span> V[r][j] <span class="op">/</span> vMax<span class="op">,</span> k<span class="op">,</span> p<span class="op">,</span> xV<span class="op">,</span> y0<span class="op">,</span> factorColor)<span class="op">;</span></span>
+<span id="cb3-404"><a href="#cb3-404"></a></span>
+<span id="cb3-405"><a href="#cb3-405"></a>  <span class="kw">const</span> xArr <span class="op">=</span> xV <span class="op">+</span> p <span class="op">*</span> cw <span class="op">+</span> <span class="dv">14</span><span class="op">;</span></span>
+<span id="cb3-406"><a href="#cb3-406"></a>  <span class="fu">txt</span>(<span class="st">"→"</span><span class="op">,</span> xArr<span class="op">,</span> y0 <span class="op">+</span> n <span class="op">*</span> cw <span class="op">/</span> <span class="dv">2</span> <span class="op">+</span> <span class="dv">6</span><span class="op">,</span> { <span class="dt">size</span><span class="op">:</span> <span class="dv">22</span><span class="op">,</span> <span class="dt">w</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span> <span class="dt">anchor</span><span class="op">:</span> <span class="st">"middle"</span> })<span class="op">;</span></span>
+<span id="cb3-407"><a href="#cb3-407"></a></span>
+<span id="cb3-408"><a href="#cb3-408"></a>  <span class="kw">const</span> xR <span class="op">=</span> xArr <span class="op">+</span> <span class="dv">18</span><span class="op">;</span></span>
+<span id="cb3-409"><a href="#cb3-409"></a>  <span class="fu">txt</span>(<span class="vs">`Rebuilt (k = </span><span class="sc">${</span>k<span class="sc">}</span><span class="vs">)`</span><span class="op">,</span> xR<span class="op">,</span> y0 <span class="op">-</span> <span class="dv">8</span>)<span class="op">;</span></span>
+<span id="cb3-410"><a href="#cb3-410"></a>  <span class="fu">block</span>((i<span class="op">,</span> j) <span class="kw">=&gt;</span> Mk[i][j]<span class="op">,</span> n<span class="op">,</span> p<span class="op">,</span> xR<span class="op">,</span> y0<span class="op">,</span> decompColor)<span class="op">;</span></span>
+<span id="cb3-411"><a href="#cb3-411"></a></span>
+<span id="cb3-412"><a href="#cb3-412"></a>  <span class="kw">const</span> pct <span class="op">=</span> (s<span class="op">.</span><span class="fu">slice</span>(<span class="dv">0</span><span class="op">,</span> k)<span class="op">.</span><span class="fu">reduce</span>((a<span class="op">,</span> b) <span class="kw">=&gt;</span> a <span class="op">+</span> b <span class="op">*</span> b<span class="op">,</span> <span class="dv">0</span>) <span class="op">/</span> totalEnergy) <span class="op">*</span> <span class="dv">100</span><span class="op">;</span></span>
+<span id="cb3-413"><a href="#cb3-413"></a>  <span class="kw">const</span> bx <span class="op">=</span> <span class="dv">10</span><span class="op">,</span> by <span class="op">=</span> y0 <span class="op">+</span> n <span class="op">*</span> cw <span class="op">+</span> <span class="dv">26</span><span class="op">,</span> bw <span class="op">=</span> <span class="dv">520</span><span class="op">,</span> bh <span class="op">=</span> <span class="dv">20</span><span class="op">;</span></span>
+<span id="cb3-414"><a href="#cb3-414"></a>  <span class="fu">txt</span>(<span class="st">"Variation captured"</span><span class="op">,</span> bx<span class="op">,</span> by <span class="op">-</span> <span class="dv">6</span>)<span class="op">;</span></span>
+<span id="cb3-415"><a href="#cb3-415"></a>  svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"rect"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"x"</span><span class="op">,</span> bx)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y"</span><span class="op">,</span> by)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"width"</span><span class="op">,</span> bw)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"height"</span><span class="op">,</span> bh)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"rx"</span><span class="op">,</span> <span class="dv">5</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> <span class="st">"#eee"</span>)<span class="op">;</span></span>
+<span id="cb3-416"><a href="#cb3-416"></a>  svg<span class="op">.</span><span class="fu">append</span>(<span class="st">"rect"</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"x"</span><span class="op">,</span> bx)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"y"</span><span class="op">,</span> by)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"width"</span><span class="op">,</span> bw <span class="op">*</span> pct <span class="op">/</span> <span class="dv">100</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"height"</span><span class="op">,</span> bh)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"rx"</span><span class="op">,</span> <span class="dv">5</span>)<span class="op">.</span><span class="fu">attr</span>(<span class="st">"fill"</span><span class="op">,</span> <span class="st">"#E78824"</span>)<span class="op">;</span></span>
+<span id="cb3-417"><a href="#cb3-417"></a>  <span class="fu">txt</span>(<span class="vs">`</span><span class="sc">${</span>pct<span class="op">.</span><span class="fu">toFixed</span>(<span class="dv">0</span>)<span class="sc">}</span><span class="vs">%`</span><span class="op">,</span> bx <span class="op">+</span> bw <span class="op">+</span> <span class="dv">10</span><span class="op">,</span> by <span class="op">+</span> bh <span class="op">-</span> <span class="dv">3</span><span class="op">,</span> { <span class="dt">w</span><span class="op">:</span> <span class="dv">800</span><span class="op">,</span> <span class="dt">size</span><span class="op">:</span> <span class="dv">16</span><span class="op">,</span> <span class="dt">fill</span><span class="op">:</span> <span class="st">"#E78824"</span> })<span class="op">;</span></span>
+<span id="cb3-418"><a href="#cb3-418"></a></span>
+<span id="cb3-419"><a href="#cb3-419"></a>  <span class="kw">const</span> full <span class="op">=</span> n <span class="op">*</span> p<span class="op">,</span> comp <span class="op">=</span> k <span class="op">*</span> (n <span class="op">+</span> p)<span class="op">;</span></span>
+<span id="cb3-420"><a href="#cb3-420"></a>  <span class="fu">txt</span>(<span class="vs">`Stored: k·(n+p) = </span><span class="sc">${</span>comp<span class="sc">}</span><span class="vs">  vs  n·p = </span><span class="sc">${</span>full<span class="sc">}</span><span class="vs">   (</span><span class="sc">${</span>(comp <span class="op">/</span> full <span class="op">*</span> <span class="dv">100</span>)<span class="op">.</span><span class="fu">toFixed</span>(<span class="dv">0</span>)<span class="sc">}</span><span class="vs">% of the original — real p is in the thousands)`</span><span class="op">,</span></span>
+<span id="cb3-421"><a href="#cb3-421"></a>    bx<span class="op">,</span> by <span class="op">+</span> bh <span class="op">+</span> <span class="dv">20</span><span class="op">,</span> { <span class="dt">size</span><span class="op">:</span> <span class="dv">12</span><span class="op">,</span> <span class="dt">w</span><span class="op">:</span> <span class="dv">600</span><span class="op">,</span> <span class="dt">fill</span><span class="op">:</span> <span class="st">"#777"</span> })<span class="op">;</span></span>
+<span id="cb3-422"><a href="#cb3-422"></a></span>
+<span id="cb3-423"><a href="#cb3-423"></a>  <span class="cf">return</span> svg<span class="op">.</span><span class="fu">node</span>()<span class="op">;</span></span>
+<span id="cb3-424"><a href="#cb3-424"></a>}</span>
+<span id="cb3-425"><a href="#cb3-425"></a></span>
+<span id="cb3-426"><a href="#cb3-426"></a><span class="co">// ---- compact one-row control (own font size, no wrapping) ----</span></span>
+<span id="cb3-427"><a href="#cb3-427"></a>viewof krank <span class="op">=</span> {</span>
+<span id="cb3-428"><a href="#cb3-428"></a>  <span class="kw">const</span> max <span class="op">=</span> decomp<span class="op">.</span><span class="at">R</span><span class="op">;</span></span>
+<span id="cb3-429"><a href="#cb3-429"></a>  <span class="kw">const</span> cont <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;div style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;font-size:18px;font-family:inherit;margin:4px 0 6px;"&gt;&lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb3-430"><a href="#cb3-430"></a>  <span class="kw">const</span> range <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;input type="range" min="1" max="</span><span class="sc">${</span>max<span class="sc">}</span><span class="vs">" step="1" value="1" style="width:240px;accent-color:#E78824;"&gt;`</span><span class="op">;</span></span>
+<span id="cb3-431"><a href="#cb3-431"></a>  <span class="kw">const</span> val <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;span style="font-weight:800;color:#E78824;min-width:1.2em;"&gt;1&lt;/span&gt;`</span><span class="op">;</span></span>
+<span id="cb3-432"><a href="#cb3-432"></a>  <span class="kw">const</span> sweep <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;button style="padding:6px 14px;border:0;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:15px;background:#007E5A;"&gt;▶ Add one by one&lt;/button&gt;`</span><span class="op">;</span></span>
+<span id="cb3-433"><a href="#cb3-433"></a>  <span class="kw">const</span> set <span class="op">=</span> v <span class="kw">=&gt;</span> { range<span class="op">.</span><span class="at">value</span> <span class="op">=</span> v<span class="op">;</span> val<span class="op">.</span><span class="at">textContent</span> <span class="op">=</span> v<span class="op">;</span> cont<span class="op">.</span><span class="at">value</span> <span class="op">=</span> <span class="op">+</span>v<span class="op">;</span> cont<span class="op">.</span><span class="fu">dispatchEvent</span>(<span class="kw">new</span> <span class="bu">Event</span>(<span class="st">"input"</span><span class="op">,</span> { <span class="dt">bubbles</span><span class="op">:</span> <span class="kw">true</span> }))<span class="op">;</span> }<span class="op">;</span></span>
+<span id="cb3-434"><a href="#cb3-434"></a>  range<span class="op">.</span><span class="at">oninput</span> <span class="op">=</span> () <span class="kw">=&gt;</span> <span class="fu">set</span>(range<span class="op">.</span><span class="at">value</span>)<span class="op">;</span></span>
+<span id="cb3-435"><a href="#cb3-435"></a>  sweep<span class="op">.</span><span class="at">onclick</span> <span class="op">=</span> () <span class="kw">=&gt;</span> { <span class="kw">let</span> k <span class="op">=</span> <span class="dv">1</span><span class="op">;</span> <span class="fu">set</span>(<span class="dv">1</span>)<span class="op">;</span> <span class="kw">const</span> id <span class="op">=</span> <span class="pp">setInterval</span>(() <span class="kw">=&gt;</span> { k<span class="op">++;</span> <span class="cf">if</span> (k <span class="op">&gt;</span> max) { <span class="pp">clearInterval</span>(id)<span class="op">;</span> <span class="cf">return</span><span class="op">;</span> } <span class="fu">set</span>(k)<span class="op">;</span> }<span class="op">,</span> <span class="dv">450</span>)<span class="op">;</span> }<span class="op">;</span></span>
+<span id="cb3-436"><a href="#cb3-436"></a>  cont<span class="op">.</span><span class="at">value</span> <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb3-437"><a href="#cb3-437"></a>  cont<span class="op">.</span><span class="fu">append</span>(<span class="fu">html</span><span class="vs">`&lt;span style="font-weight:700;white-space:nowrap;"&gt;Components (k):&lt;/span&gt;`</span><span class="op">,</span> range<span class="op">,</span> val<span class="op">,</span> sweep)<span class="op">;</span></span>
+<span id="cb3-438"><a href="#cb3-438"></a>  <span class="cf">return</span> cont<span class="op">;</span></span>
+<span id="cb3-439"><a href="#cb3-439"></a>}</span>
+<span id="cb3-440"><a href="#cb3-440"></a></span>
+<span id="cb3-441"><a href="#cb3-441"></a><span class="co">// ---- the figure (capped width so it can't blow up on wide screens) ----</span></span>
+<span id="cb3-442"><a href="#cb3-442"></a><span class="fu">html</span><span class="vs">`&lt;div style="max-width:1040px;margin:6px auto 0;"&gt;</span><span class="sc">${</span><span class="fu">drawDecomp</span>(krank)<span class="sc">}</span><span class="vs">&lt;/div&gt;`</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-1" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-2" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-3" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-4" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-5" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-6" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-7" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="pca" class="slide level2">
+<h2>PCA — the main patterns</h2>
+<p>PCA looks at the data table on its own and asks: along which direction do the samples vary the most? That direction (<strong>PC₁</strong>) often reveals natural groupings — clans or subclasses — even though it was never told they exist.</p>
+<div class="cell">
+<div class="sourceCode cell-code hidden" id="cb4" data-startfrom="451" data-source-offset="0"><pre class="sourceCode numberSource js number-lines code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 450;"><span id="cb4-451"><a href="#cb4-451"></a><span class="fu">panel</span>(<span class="st">"pca"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-4" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+<p><em>PCA is <strong>unsupervised</strong>. The biggest source of variation isn’t always what you care about — here the groups stay mixed, and the separation score is near zero.</em></p>
+</section>
+<section id="pls" class="slide level2">
+<h2>PLS — patterns tied to an outcome</h2>
+<p>PLS uses the data table and an outcome (e.g.&nbsp;disease vs.&nbsp;healthy). It looks for directions that vary across samples and track that outcome so the groups we want are cleanly apart.</p>
+<p>Same data, but the outcome guides the direction hence the separation score jumps up.</p>
+<div class="cell">
+<div class="sourceCode cell-code hidden" id="cb5" data-startfrom="464" data-source-offset="0"><pre class="sourceCode numberSource js number-lines code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 463;"><span id="cb5-464"><a href="#cb5-464"></a><span class="fu">panel</span>(<span class="st">"pls"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-5" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+</section>
+<section id="explore" class="slide level2">
+<h2>Spin it yourself</h2>
+<p>Drag the angle, or hit a button to animate the projection line to what PCA vs.&nbsp;PLS would choose. Watch the separation score (top-right) rise and fall.</p>
+<div class="cell">
+<div class="sourceCode cell-code hidden" id="cb6" data-startfrom="475" data-source-offset="0"><pre class="sourceCode numberSource js number-lines code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 474;"><span id="cb6-475"><a href="#cb6-475"></a>viewof theta <span class="op">=</span> {</span>
+<span id="cb6-476"><a href="#cb6-476"></a>  <span class="kw">const</span> toDeg <span class="op">=</span> v <span class="kw">=&gt;</span> ((<span class="bu">Math</span><span class="op">.</span><span class="fu">atan2</span>(v<span class="op">.</span><span class="at">y</span><span class="op">,</span> v<span class="op">.</span><span class="at">x</span>) <span class="op">*</span> <span class="dv">180</span> <span class="op">/</span> <span class="bu">Math</span><span class="op">.</span><span class="cn">PI</span>) <span class="op">%</span> <span class="dv">180</span> <span class="op">+</span> <span class="dv">180</span>) <span class="op">%</span> <span class="dv">180</span><span class="op">;</span></span>
+<span id="cb6-477"><a href="#cb6-477"></a>  <span class="kw">const</span> pcaA <span class="op">=</span> <span class="fu">toDeg</span>(pcaDir)<span class="op">;</span></span>
+<span id="cb6-478"><a href="#cb6-478"></a>  <span class="kw">const</span> plsA <span class="op">=</span> <span class="fu">toDeg</span>(plsDir)<span class="op">;</span></span>
+<span id="cb6-479"><a href="#cb6-479"></a></span>
+<span id="cb6-480"><a href="#cb6-480"></a>  <span class="kw">const</span> cont <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;div style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;font-size:18px;font-family:inherit;margin:4px 0 8px;"&gt;&lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb6-481"><a href="#cb6-481"></a>  <span class="kw">const</span> range <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;input type="range" min="0" max="180" step="0.5" value="0" style="width:240px;accent-color:#E78824;"&gt;`</span><span class="op">;</span></span>
+<span id="cb6-482"><a href="#cb6-482"></a>  <span class="kw">const</span> val <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;span style="font-weight:800;color:#E78824;min-width:2.8em;"&gt;0°&lt;/span&gt;`</span><span class="op">;</span></span>
+<span id="cb6-483"><a href="#cb6-483"></a>  <span class="kw">const</span> bStyle <span class="op">=</span> <span class="st">"padding:6px 14px;border:0;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:15px;"</span><span class="op">;</span></span>
+<span id="cb6-484"><a href="#cb6-484"></a>  <span class="kw">const</span> bPCA <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;button style="</span><span class="sc">${</span>bStyle<span class="sc">}</span><span class="vs">background:#E78824;"&gt;▶ to PCA&lt;/button&gt;`</span><span class="op">;</span></span>
+<span id="cb6-485"><a href="#cb6-485"></a>  <span class="kw">const</span> bPLS <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;button style="</span><span class="sc">${</span>bStyle<span class="sc">}</span><span class="vs">background:#007E5A;"&gt;▶ to PLS&lt;/button&gt;`</span><span class="op">;</span></span>
+<span id="cb6-486"><a href="#cb6-486"></a></span>
+<span id="cb6-487"><a href="#cb6-487"></a>  <span class="kw">const</span> set <span class="op">=</span> v <span class="kw">=&gt;</span> {</span>
+<span id="cb6-488"><a href="#cb6-488"></a>    range<span class="op">.</span><span class="at">value</span> <span class="op">=</span> v<span class="op">;</span></span>
+<span id="cb6-489"><a href="#cb6-489"></a>    val<span class="op">.</span><span class="at">textContent</span> <span class="op">=</span> (<span class="op">+</span>v)<span class="op">.</span><span class="fu">toFixed</span>(<span class="dv">0</span>) <span class="op">+</span> <span class="st">"°"</span><span class="op">;</span></span>
+<span id="cb6-490"><a href="#cb6-490"></a>    cont<span class="op">.</span><span class="at">value</span> <span class="op">=</span> <span class="op">+</span>v<span class="op">;</span></span>
+<span id="cb6-491"><a href="#cb6-491"></a>    cont<span class="op">.</span><span class="fu">dispatchEvent</span>(<span class="kw">new</span> <span class="bu">Event</span>(<span class="st">"input"</span><span class="op">,</span> { <span class="dt">bubbles</span><span class="op">:</span> <span class="kw">true</span> }))<span class="op">;</span></span>
+<span id="cb6-492"><a href="#cb6-492"></a>  }<span class="op">;</span></span>
+<span id="cb6-493"><a href="#cb6-493"></a>  range<span class="op">.</span><span class="at">oninput</span> <span class="op">=</span> () <span class="kw">=&gt;</span> <span class="fu">set</span>(range<span class="op">.</span><span class="at">value</span>)<span class="op">;</span></span>
+<span id="cb6-494"><a href="#cb6-494"></a></span>
+<span id="cb6-495"><a href="#cb6-495"></a>  <span class="kw">let</span> raf<span class="op">;</span></span>
+<span id="cb6-496"><a href="#cb6-496"></a>  <span class="kw">const</span> animateTo <span class="op">=</span> target <span class="kw">=&gt;</span> {</span>
+<span id="cb6-497"><a href="#cb6-497"></a>    <span class="fu">cancelAnimationFrame</span>(raf)<span class="op">;</span></span>
+<span id="cb6-498"><a href="#cb6-498"></a>    <span class="kw">const</span> start <span class="op">=</span> <span class="op">+</span>cont<span class="op">.</span><span class="at">value</span><span class="op">,</span> t0 <span class="op">=</span> <span class="bu">performance</span><span class="op">.</span><span class="fu">now</span>()<span class="op">,</span> dur <span class="op">=</span> <span class="dv">750</span><span class="op">;</span></span>
+<span id="cb6-499"><a href="#cb6-499"></a>    <span class="kw">const</span> step <span class="op">=</span> now <span class="kw">=&gt;</span> {</span>
+<span id="cb6-500"><a href="#cb6-500"></a>      <span class="kw">const</span> k <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">min</span>(<span class="dv">1</span><span class="op">,</span> (now <span class="op">-</span> t0) <span class="op">/</span> dur)<span class="op">;</span></span>
+<span id="cb6-501"><a href="#cb6-501"></a>      <span class="kw">const</span> e <span class="op">=</span> k <span class="op">&lt;</span> <span class="fl">0.5</span> <span class="op">?</span> <span class="dv">2</span> <span class="op">*</span> k <span class="op">*</span> k <span class="op">:</span> <span class="dv">1</span> <span class="op">-</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">pow</span>(<span class="op">-</span><span class="dv">2</span> <span class="op">*</span> k <span class="op">+</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">2</span>) <span class="op">/</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb6-502"><a href="#cb6-502"></a>      <span class="fu">set</span>(start <span class="op">+</span> (target <span class="op">-</span> start) <span class="op">*</span> e)<span class="op">;</span></span>
+<span id="cb6-503"><a href="#cb6-503"></a>      <span class="cf">if</span> (k <span class="op">&lt;</span> <span class="dv">1</span>) raf <span class="op">=</span> <span class="fu">requestAnimationFrame</span>(step)<span class="op">;</span></span>
+<span id="cb6-504"><a href="#cb6-504"></a>    }<span class="op">;</span></span>
+<span id="cb6-505"><a href="#cb6-505"></a>    raf <span class="op">=</span> <span class="fu">requestAnimationFrame</span>(step)<span class="op">;</span></span>
+<span id="cb6-506"><a href="#cb6-506"></a>  }<span class="op">;</span></span>
+<span id="cb6-507"><a href="#cb6-507"></a>  bPCA<span class="op">.</span><span class="at">onclick</span> <span class="op">=</span> () <span class="kw">=&gt;</span> <span class="fu">animateTo</span>(pcaA)<span class="op">;</span></span>
+<span id="cb6-508"><a href="#cb6-508"></a>  bPLS<span class="op">.</span><span class="at">onclick</span> <span class="op">=</span> () <span class="kw">=&gt;</span> <span class="fu">animateTo</span>(plsA)<span class="op">;</span></span>
+<span id="cb6-509"><a href="#cb6-509"></a></span>
+<span id="cb6-510"><a href="#cb6-510"></a>  cont<span class="op">.</span><span class="at">value</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb6-511"><a href="#cb6-511"></a>  cont<span class="op">.</span><span class="fu">append</span>(</span>
+<span id="cb6-512"><a href="#cb6-512"></a>    <span class="fu">html</span><span class="vs">`&lt;span style="font-weight:700;white-space:nowrap;"&gt;Projection angle:&lt;/span&gt;`</span><span class="op">,</span></span>
+<span id="cb6-513"><a href="#cb6-513"></a>    range<span class="op">,</span> val<span class="op">,</span> bPCA<span class="op">,</span> bPLS</span>
+<span id="cb6-514"><a href="#cb6-514"></a>  )<span class="op">;</span></span>
+<span id="cb6-515"><a href="#cb6-515"></a>  <span class="cf">return</span> cont<span class="op">;</span></span>
+<span id="cb6-516"><a href="#cb6-516"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-6" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code hidden" id="cb7" data-startfrom="520" data-source-offset="0"><pre class="sourceCode numberSource js number-lines code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 519;"><span id="cb7-520"><a href="#cb7-520"></a>{</span>
+<span id="cb7-521"><a href="#cb7-521"></a>  <span class="kw">const</span> th <span class="op">=</span> theta <span class="op">*</span> <span class="bu">Math</span><span class="op">.</span><span class="cn">PI</span> <span class="op">/</span> <span class="dv">180</span><span class="op">;</span></span>
+<span id="cb7-522"><a href="#cb7-522"></a>  <span class="kw">const</span> fig <span class="op">=</span> <span class="fu">figure</span>({ <span class="dt">x</span><span class="op">:</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">cos</span>(th)<span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sin</span>(th) }<span class="op">,</span> <span class="st">"Your chosen projection"</span>)<span class="op">;</span></span>
+<span id="cb7-523"><a href="#cb7-523"></a>  <span class="cf">return</span> <span class="fu">html</span><span class="vs">`&lt;div style="max-width:1040px;margin:6px auto 0;"&gt;</span><span class="sc">${</span>fig<span class="sc">}</span><span class="vs">&lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb7-524"><a href="#cb7-524"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-7" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+</section>
+<section id="project" class="slide level2">
+<h2>The project</h2>
+<ul>
+<li>Build a Julia package implementing PCA, PLS, PMD, and related decompositions.</li>
+<li>Engineered for the very large matrices typical for metabolomics having thousands of metabolites across many samples.</li>
+<li>A clean, consistent light package meant to be a shared foundation for further biostatistics packages in the department.</li>
+<li>Why Julia: near-C performance with readable high-level.</li>
+</ul>
+<p><br></p>
+<div class="uthsc-green-box">
+<p>The aim: a fast, reusable decomposition toolkit that other department projects can build on.</p>
+</div>
+</section>
+<section id="section-1" class="slide level2" data-background-image="assets/uthsc-building-faded.png" data-background-size="cover" data-background-position="center" data-background-color="#ffffff">
+<h2></h2>
+<div class="thankyou-slide">
+<div class="thankyou-content">
+<p>Thank you for your attention!</p>
+</div>
+</div>
+<div class="footer footer-default">
+
+</div>
+</section>
+    </div>
+  </div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="talk_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="talk_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="talk_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="talk_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="talk_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="talk_files/libs/revealjs/plugin/reveal-chalkboard/plugin.js"></script>
+  <script src="talk_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="talk_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="talk_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="talk_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': false,
+'previewLinksAuto': false,
+'smaller': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleChalkboard(event)\"><kbd>b</kbd> Toggle Chalkboard</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleNotesCanvas(event)\"><kbd>c</kbd> Toggle Notes Canvas</a></li>\n<li class=\"slide-tool-item\" data-item=\"6\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.downloadDrawings(event)\"><kbd>d</kbd> Download Drawings</a></li>\n<li class=\"slide-tool-item\" data-item=\"7\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'chalkboard': {"buttons":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: true,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: true,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'slide',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'fade',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1280,
+
+        height: 720,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 5.0e-2,
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, RevealChalkboard, QuartoSupport,
+
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script type="ojs-module-contents">
+    {"contents":[{"methodName":"interpret","cellName":"ojs-cell-1","inline":false,"source":"//----------------------------------------------------------------------\n// SHARED SETUP (defined once, available to every slide in the deck)\n//----------------------------------------------------------------------\nd3 = require(\"d3@7\")\n\nmakeRng = function (seed) {\n  let s = seed >>> 0;\n  return function () {\n    s = (s + 0x6d2b79f5) >>> 0;\n    let t = s;\n    t = Math.imul(t ^ (t >>> 15), 1 | t);\n    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);\n    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;\n  };\n}\n\nrandn = function (rng) {\n  let u = 0, v = 0;\n  while (u === 0) u = rng();\n  while (v === 0) v = rng();\n  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);\n}\n\n// Two groups. Big spread along x (drives total variance) but the groups\n// only differ along y (the thing we actually care about).\ndata = {\n  const rng = makeRng(42);\n  const pts = [];\n  const N = 110;\n  for (let i = 0; i < N; i++) pts.push({ x: randn(rng) * 2.6, y:  1.3 + randn(rng) * 0.55, g: 0 });\n  for (let i = 0; i < N; i++) pts.push({ x: randn(rng) * 2.6, y: -1.3 + randn(rng) * 0.55, g: 1 });\n  return pts;\n}\n\nmeanVec = ({ x: d3.mean(data, d => d.x), y: d3.mean(data, d => d.y) })\n\n// PCA direction = top eigenvector of the 2x2 covariance matrix.\npcaDir = {\n  const mx = meanVec.x, my = meanVec.y;\n  let a = 0, b = 0, c = 0;\n  for (const d of data) { const dx = d.x - mx, dy = d.y - my; a += dx * dx; b += dx * dy; c += dy * dy; }\n  const n = data.length; a /= n; b /= n; c /= n;\n  const tr = a + c, det = a * c - b * b;\n  const lam = tr / 2 + Math.sqrt(Math.max(0, (tr * tr) / 4 - det));\n  const v1x = b, v1y = lam - a;\n  const v2x = lam - c, v2y = b;\n  let vx, vy;\n  if (Math.hypot(v1x, v1y) >= Math.hypot(v2x, v2y)) { vx = v1x; vy = v1y; } else { vx = v2x; vy = v2y; }\n  const nrm = Math.hypot(vx, vy) || 1;\n  return { x: vx / nrm, y: vy / nrm };\n}\n\n// PLS direction (single outcome) = normalized covariance of features with the label.\nplsDir = {\n  const mx = meanVec.x, my = meanVec.y;\n  let wx = 0, wy = 0;\n  for (const d of data) { const yy = d.g === 0 ? 1 : -1; wx += (d.x - mx) * yy; wy += (d.y - my) * yy; }\n  const nrm = Math.hypot(wx, wy) || 1;\n  return { x: wx / nrm, y: wy / nrm };\n}\n\nkde = function (values, bw, xs) {\n  return xs.map(x => {\n    let s = 0;\n    for (const v of values) { const u = (x - v) / bw; s += Math.exp(-0.5 * u * u); }\n    return [x, s / (values.length * bw * Math.sqrt(2 * Math.PI))];\n  });\n}\n\n// standardized separation between the two groups along a projection direction\nseparation = function (ts) {\n  const t0 = ts.filter((_, i) => data[i].g === 0);\n  const t1 = ts.filter((_, i) => data[i].g === 1);\n  const m0 = d3.mean(t0), m1 = d3.mean(t1);\n  const v0 = d3.variance(t0), v1 = d3.variance(t1);\n  const sd = Math.sqrt((v0 + v1) / 2) || 1e-9;\n  return Math.abs(m0 - m1) / sd;\n}\n\n// the drawing routine: takes ANY direction and renders scatter + projection\nfigure = function (dir, leftLabel) {\n  const aid = \"arrowhd-\" + Math.random().toString(36).slice(2);\n  const W = 1000, H = 380;\n  const colors = [\"#E78824\", \"#007E5A\"];\n  const names = [\"Group A\", \"Group B\"];\n\n  const svg = d3.create(\"svg\")\n    .attr(\"viewBox\", `0 0 ${W} ${H}`)\n    .style(\"width\", \"100%\").style(\"height\", \"auto\")\n    .style(\"font-family\", \"inherit\");\n\n  // ---- left: scatter (equal aspect so the arrow direction is honest) ----\n  const sx0 = 30, sy0 = 40, sW = 560, sH = 300;\n  const yhalf = (sH / sW) * 8.5;\n  const sx = d3.scaleLinear().domain([-8.5, 8.5]).range([sx0, sx0 + sW]);\n  const sy = d3.scaleLinear().domain([-yhalf, yhalf]).range([sy0 + sH, sy0]);\n\n  svg.append(\"rect\").attr(\"x\", sx0).attr(\"y\", sy0).attr(\"width\", sW).attr(\"height\", sH)\n    .attr(\"fill\", \"none\").attr(\"stroke\", \"rgba(0,0,0,0.15)\").attr(\"rx\", 10);\n\n  const mx = meanVec.x, my = meanVec.y;\n  const ts = data.map(d => (d.x - mx) * dir.x + (d.y - my) * dir.y);\n  const tmin = d3.min(ts), tmax = d3.max(ts);\n  const tpad = (tmax - tmin) * 0.08 + 1e-6;\n  const aLo = { x: mx + (tmin - tpad) * dir.x, y: my + (tmin - tpad) * dir.y };\n  const aHi = { x: mx + (tmax + tpad) * dir.x, y: my + (tmax + tpad) * dir.y };\n\n  data.forEach((d, i) => {\n    const t = ts[i];\n    svg.append(\"line\")\n      .attr(\"x1\", sx(d.x)).attr(\"y1\", sy(d.y))\n      .attr(\"x2\", sx(mx + t * dir.x)).attr(\"y2\", sy(my + t * dir.y))\n      .attr(\"stroke\", colors[d.g]).attr(\"stroke-width\", 1).attr(\"opacity\", 0.12);\n  });\n\n  svg.append(\"defs\").append(\"marker\")\n    .attr(\"id\", aid).attr(\"viewBox\", \"0 0 10 10\")\n    .attr(\"refX\", 8).attr(\"refY\", 5).attr(\"markerWidth\", 7).attr(\"markerHeight\", 7)\n    .attr(\"orient\", \"auto-start-reverse\")\n    .append(\"path\").attr(\"d\", \"M0,0 L10,5 L0,10 z\").attr(\"fill\", \"#2b2b2b\");\n  svg.append(\"line\")\n    .attr(\"x1\", sx(aLo.x)).attr(\"y1\", sy(aLo.y))\n    .attr(\"x2\", sx(aHi.x)).attr(\"y2\", sy(aHi.y))\n    .attr(\"stroke\", \"#2b2b2b\").attr(\"stroke-width\", 2.5).attr(\"marker-end\", `url(#${aid})`);\n\n  data.forEach((d, i) => {\n    const t = ts[i];\n    svg.append(\"circle\").attr(\"cx\", sx(mx + t * dir.x)).attr(\"cy\", sy(my + t * dir.y))\n      .attr(\"r\", 3).attr(\"fill\", colors[d.g]).attr(\"opacity\", 0.55);\n  });\n\n  data.forEach(d => {\n    svg.append(\"circle\").attr(\"cx\", sx(d.x)).attr(\"cy\", sy(d.y)).attr(\"r\", 4.5)\n      .attr(\"fill\", colors[d.g]).attr(\"opacity\", 0.9)\n      .attr(\"stroke\", \"white\").attr(\"stroke-width\", 0.8);\n  });\n\n  svg.append(\"text\").attr(\"x\", sx0).attr(\"y\", 26).attr(\"font-size\", 15).attr(\"font-weight\", 700).attr(\"fill\", \"#333\")\n    .text(leftLabel);\n\n  const lg = svg.append(\"g\").attr(\"transform\", `translate(${sx0 + sW - 150},${sy0 + 12})`);\n  names.forEach((nm, i) => {\n    lg.append(\"circle\").attr(\"cx\", 0).attr(\"cy\", i * 20).attr(\"r\", 6).attr(\"fill\", colors[i]);\n    lg.append(\"text\").attr(\"x\", 12).attr(\"y\", i * 20 + 4).attr(\"font-size\", 13).attr(\"fill\", \"#333\").text(nm);\n  });\n\n  // ---- right: distribution after projecting ----\n  const px0 = 640, py0 = 40, pW = 330, pH = 300;\n  svg.append(\"text\").attr(\"x\", px0).attr(\"y\", 26).attr(\"font-size\", 15).attr(\"font-weight\", 700).attr(\"fill\", \"#333\")\n    .text(\"After projecting onto that line\");\n\n  const tsc = d3.scaleLinear().domain([tmin - tpad, tmax + tpad]).range([px0, px0 + pW]);\n  svg.append(\"line\").attr(\"x1\", px0).attr(\"y1\", py0 + pH).attr(\"x2\", px0 + pW).attr(\"y2\", py0 + pH)\n    .attr(\"stroke\", \"rgba(0,0,0,0.3)\").attr(\"stroke-width\", 1.5);\n\n  const bw = 0.45 * (d3.deviation(ts) || 1);\n  const grid = d3.range(60).map(k => (tmin - tpad) + (k / 59) * ((tmax + tpad) - (tmin - tpad)));\n  const g0 = kde(ts.filter((_, i) => data[i].g === 0), bw, grid);\n  const g1 = kde(ts.filter((_, i) => data[i].g === 1), bw, grid);\n  const maxd = d3.max([...g0, ...g1], d => d[1]) || 1;\n  const dsc = d3.scaleLinear().domain([0, maxd]).range([py0 + pH, py0 + 44]);\n\n  const area = d3.area().x(d => tsc(d[0])).y0(py0 + pH).y1(d => dsc(d[1])).curve(d3.curveBasis);\n  svg.append(\"path\").attr(\"d\", area(g0)).attr(\"fill\", colors[0]).attr(\"opacity\", 0.45);\n  svg.append(\"path\").attr(\"d\", area(g1)).attr(\"fill\", colors[1]).attr(\"opacity\", 0.45);\n\n  const lineg = d3.line().x(d => tsc(d[0])).y(d => dsc(d[1])).curve(d3.curveBasis);\n  svg.append(\"path\").attr(\"d\", lineg(g0)).attr(\"fill\", \"none\").attr(\"stroke\", colors[0]).attr(\"stroke-width\", 2);\n  svg.append(\"path\").attr(\"d\", lineg(g1)).attr(\"fill\", \"none\").attr(\"stroke\", colors[1]).attr(\"stroke-width\", 2);\n\n  data.forEach((d, i) => {\n    svg.append(\"line\").attr(\"x1\", tsc(ts[i])).attr(\"y1\", py0 + pH).attr(\"x2\", tsc(ts[i])).attr(\"y2\", py0 + pH - 7)\n      .attr(\"stroke\", colors[d.g]).attr(\"stroke-width\", 1).attr(\"opacity\", 0.5);\n  });\n\n  // live separation readout\n  const sep = separation(ts);\n  svg.append(\"text\").attr(\"x\", px0 + pW).attr(\"y\", py0 + 16).attr(\"text-anchor\", \"end\")\n    .attr(\"font-size\", 14).attr(\"font-weight\", 800)\n    .attr(\"fill\", sep > 1.2 ? \"#007E5A\" : \"#b06a1f\")\n    .text(`Group separation: ${sep.toFixed(2)}`);\n\n  return svg.node();\n}\n\npanel = function (method) {\n  return method === \"pca\"\n    ? figure(pcaDir, \"PC₁ direction (most variation)\")\n    : figure(plsDir, \"PLS₁ direction (linked to outcome)\");\n}\n"},{"methodName":"interpret","cellName":"ojs-cell-2","inline":false,"source":"heatmap = {\n  const cols = 44, rows = 16;\n  const rng = makeRng(7);\n  const W = 920, H = 250, pad = { t: 34, r: 20, b: 24, l: 60 };\n  const cw = (W - pad.l - pad.r) / cols, ch = (H - pad.t - pad.b) / rows;\n  const color = d3.scaleSequential(d3.interpolateOranges).domain([0, 1]);\n\n  const svg = d3.create(\"svg\").attr(\"viewBox\", `0 0 ${W} ${H}`)\n    .style(\"width\", \"100%\").style(\"height\", \"auto\").style(\"font-family\", \"inherit\");\n\n  for (let i = 0; i < rows; i++)\n    for (let j = 0; j < cols; j++)\n      svg.append(\"rect\")\n        .attr(\"x\", pad.l + j * cw).attr(\"y\", pad.t + i * ch)\n        .attr(\"width\", cw - 1).attr(\"height\", ch - 1).attr(\"rx\", 1)\n        .attr(\"fill\", color(Math.pow(rng(), 1.4)));\n\n  svg.append(\"text\").attr(\"x\", pad.l).attr(\"y\", 22).attr(\"font-weight\", 700).attr(\"font-size\", 15).attr(\"fill\", \"#333\")\n    .text(\"metabolites  (thousands of columns →)\");\n  const cy = pad.t + (H - pad.t - pad.b) / 2;\n  svg.append(\"text\").attr(\"x\", 16).attr(\"y\", cy).attr(\"transform\", `rotate(-90 16 ${cy})`)\n    .attr(\"text-anchor\", \"middle\").attr(\"font-weight\", 700).attr(\"font-size\", 15).attr(\"fill\", \"#333\")\n    .text(\"samples ↓\");\n\n  return svg.node();\n}\n"},{"methodName":"interpret","cellName":"ojs-cell-3","inline":false,"source":"// ---- definitions (named cells render nothing) ----\ndecomp = {\n  const n = 24, p = 56, R = 6;\n  const rng = (() => { let s = 11 >>> 0; return () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), 1 | t); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; })();\n  const s = [9, 6, 4.5, 3, 2, 1.2];\n  const U = [], V = [];\n  for (let r = 0; r < R; r++) {\n    const ph = rng() * Math.PI * 2, ph2 = rng() * Math.PI * 2;\n    const ur = [], vr = [];\n    for (let i = 0; i < n; i++) ur.push(Math.cos(Math.PI * (r + 1) * i / n + ph));\n    for (let j = 0; j < p; j++) vr.push(Math.cos(Math.PI * (r + 1) * j / (p / 3) + ph2));\n    const nu = Math.hypot(...ur) || 1, nv = Math.hypot(...vr) || 1;\n    U.push(ur.map(x => x / nu)); V.push(vr.map(x => x / nv));\n  }\n  const noise = [];\n  for (let i = 0; i < n; i++) { const row = []; for (let j = 0; j < p; j++) row.push(0.04 * (rng() * 2 - 1)); noise.push(row); }\n  const M = [];\n  for (let i = 0; i < n; i++) { const row = []; for (let j = 0; j < p; j++) { let v = noise[i][j]; for (let r = 0; r < R; r++) v += s[r] * U[r][i] * V[r][j]; row.push(v); } M.push(row); }\n  const maxAbs = d3.max(M.flat(), v => Math.abs(v));\n  const uMax = d3.max(U.flat(), v => Math.abs(v)) || 1;\n  const vMax = d3.max(V.flat(), v => Math.abs(v)) || 1;\n  const totalEnergy = s.reduce((a, b) => a + b * b, 0) + d3.sum(noise.flat(), v => v * v);\n  return { n, p, R, s, U, V, M, maxAbs, uMax, vMax, totalEnergy };\n}\n\nrecon = function (k) {\n  const { n, p, U, V, s } = decomp;\n  const out = [];\n  for (let i = 0; i < n; i++) { const row = []; for (let j = 0; j < p; j++) { let v = 0; for (let r = 0; r < k; r++) v += s[r] * U[r][i] * V[r][j]; row.push(v); } out.push(row); }\n  return out;\n}\n\ndecompColor = d3.scaleSequential(d3.interpolateRgbBasis([\"#0a7d63\", \"#f4f1ec\", \"#E78824\"])).domain([-decomp.maxAbs, decomp.maxAbs])\nfactorColor = d3.scaleSequential(d3.interpolateRgbBasis([\"#0a7d63\", \"#f4f1ec\", \"#E78824\"])).domain([-1, 1])\n\ndrawDecomp = function (k) {\n  const { n, p, M, U, V, s, uMax, vMax, totalEnergy } = decomp;\n  const cw = 5, W = 1000, H = 240;\n  const Mk = recon(k);\n  const svg = d3.create(\"svg\").attr(\"viewBox\", `0 0 ${W} ${H}`)\n    .style(\"width\", \"100%\").style(\"height\", \"auto\").style(\"font-family\", \"inherit\");\n\n  const block = (get, rows, cols, x, y, color) => {\n    for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++)\n      svg.append(\"rect\").attr(\"x\", x + j * cw).attr(\"y\", y + i * cw)\n        .attr(\"width\", cw - 0.4).attr(\"height\", cw - 0.4).attr(\"fill\", color(get(i, j)));\n  };\n  const txt = (t, x, y, o = {}) => svg.append(\"text\").attr(\"x\", x).attr(\"y\", y)\n    .attr(\"font-size\", o.size || 13).attr(\"font-weight\", o.w || 700)\n    .attr(\"fill\", o.fill || \"#333\").attr(\"text-anchor\", o.anchor || \"start\").text(t);\n\n  const y0 = 44;\n  txt(\"M  (n × p)\", 10, y0 - 8);\n  block((i, j) => M[i][j], n, p, 10, y0, decompColor);\n\n  txt(\"≈\", 10 + p * cw + 12, y0 + n * cw / 2 + 6, { size: 24, w: 800, anchor: \"middle\" });\n\n  const xU = 10 + p * cw + 34;\n  txt(\"U\", xU, y0 - 8);\n  block((i, r) => U[r][i] / uMax, n, k, xU, y0, factorColor);\n\n  const xMul = xU + k * cw + 8;\n  txt(\"×\", xMul, y0 + n * cw / 2 + 5, { size: 18, w: 800, anchor: \"middle\" });\n\n  const xV = xMul + 14;\n  txt(\"V\", xV, y0 - 8);\n  block((r, j) => V[r][j] / vMax, k, p, xV, y0, factorColor);\n\n  const xArr = xV + p * cw + 14;\n  txt(\"→\", xArr, y0 + n * cw / 2 + 6, { size: 22, w: 800, anchor: \"middle\" });\n\n  const xR = xArr + 18;\n  txt(`Rebuilt (k = ${k})`, xR, y0 - 8);\n  block((i, j) => Mk[i][j], n, p, xR, y0, decompColor);\n\n  const pct = (s.slice(0, k).reduce((a, b) => a + b * b, 0) / totalEnergy) * 100;\n  const bx = 10, by = y0 + n * cw + 26, bw = 520, bh = 20;\n  txt(\"Variation captured\", bx, by - 6);\n  svg.append(\"rect\").attr(\"x\", bx).attr(\"y\", by).attr(\"width\", bw).attr(\"height\", bh).attr(\"rx\", 5).attr(\"fill\", \"#eee\");\n  svg.append(\"rect\").attr(\"x\", bx).attr(\"y\", by).attr(\"width\", bw * pct / 100).attr(\"height\", bh).attr(\"rx\", 5).attr(\"fill\", \"#E78824\");\n  txt(`${pct.toFixed(0)}%`, bx + bw + 10, by + bh - 3, { w: 800, size: 16, fill: \"#E78824\" });\n\n  const full = n * p, comp = k * (n + p);\n  txt(`Stored: k·(n+p) = ${comp}  vs  n·p = ${full}   (${(comp / full * 100).toFixed(0)}% of the original — real p is in the thousands)`,\n    bx, by + bh + 20, { size: 12, w: 600, fill: \"#777\" });\n\n  return svg.node();\n}\n\n// ---- compact one-row control (own font size, no wrapping) ----\nviewof krank = {\n  const max = decomp.R;\n  const cont = html`<div style=\"display:flex;align-items:center;flex-wrap:wrap;gap:14px;font-size:18px;font-family:inherit;margin:4px 0 6px;\"></div>`;\n  const range = html`<input type=\"range\" min=\"1\" max=\"${max}\" step=\"1\" value=\"1\" style=\"width:240px;accent-color:#E78824;\">`;\n  const val = html`<span style=\"font-weight:800;color:#E78824;min-width:1.2em;\">1</span>`;\n  const sweep = html`<button style=\"padding:6px 14px;border:0;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:15px;background:#007E5A;\">▶ Add one by one</button>`;\n  const set = v => { range.value = v; val.textContent = v; cont.value = +v; cont.dispatchEvent(new Event(\"input\", { bubbles: true })); };\n  range.oninput = () => set(range.value);\n  sweep.onclick = () => { let k = 1; set(1); const id = setInterval(() => { k++; if (k > max) { clearInterval(id); return; } set(k); }, 450); };\n  cont.value = 1;\n  cont.append(html`<span style=\"font-weight:700;white-space:nowrap;\">Components (k):</span>`, range, val, sweep);\n  return cont;\n}\n\n// ---- the figure (capped width so it can't blow up on wide screens) ----\nhtml`<div style=\"max-width:1040px;margin:6px auto 0;\">${drawDecomp(krank)}</div>`\n"},{"methodName":"interpret","cellName":"ojs-cell-4","inline":false,"source":"panel(\"pca\")\n"},{"methodName":"interpret","cellName":"ojs-cell-5","inline":false,"source":"panel(\"pls\")\n"},{"methodName":"interpret","cellName":"ojs-cell-6","inline":false,"source":"viewof theta = {\n  const toDeg = v => ((Math.atan2(v.y, v.x) * 180 / Math.PI) % 180 + 180) % 180;\n  const pcaA = toDeg(pcaDir);\n  const plsA = toDeg(plsDir);\n\n  const cont = html`<div style=\"display:flex;align-items:center;flex-wrap:wrap;gap:14px;font-size:18px;font-family:inherit;margin:4px 0 8px;\"></div>`;\n  const range = html`<input type=\"range\" min=\"0\" max=\"180\" step=\"0.5\" value=\"0\" style=\"width:240px;accent-color:#E78824;\">`;\n  const val = html`<span style=\"font-weight:800;color:#E78824;min-width:2.8em;\">0°</span>`;\n  const bStyle = \"padding:6px 14px;border:0;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:15px;\";\n  const bPCA = html`<button style=\"${bStyle}background:#E78824;\">▶ to PCA</button>`;\n  const bPLS = html`<button style=\"${bStyle}background:#007E5A;\">▶ to PLS</button>`;\n\n  const set = v => {\n    range.value = v;\n    val.textContent = (+v).toFixed(0) + \"°\";\n    cont.value = +v;\n    cont.dispatchEvent(new Event(\"input\", { bubbles: true }));\n  };\n  range.oninput = () => set(range.value);\n\n  let raf;\n  const animateTo = target => {\n    cancelAnimationFrame(raf);\n    const start = +cont.value, t0 = performance.now(), dur = 750;\n    const step = now => {\n      const k = Math.min(1, (now - t0) / dur);\n      const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;\n      set(start + (target - start) * e);\n      if (k < 1) raf = requestAnimationFrame(step);\n    };\n    raf = requestAnimationFrame(step);\n  };\n  bPCA.onclick = () => animateTo(pcaA);\n  bPLS.onclick = () => animateTo(plsA);\n\n  cont.value = 0;\n  cont.append(\n    html`<span style=\"font-weight:700;white-space:nowrap;\">Projection angle:</span>`,\n    range, val, bPCA, bPLS\n  );\n  return cont;\n}\n"},{"methodName":"interpret","cellName":"ojs-cell-7","inline":false,"source":"{\n  const th = theta * Math.PI / 180;\n  const fig = figure({ x: Math.cos(th), y: Math.sin(th) }, \"Your chosen projection\");\n  return html`<div style=\"max-width:1040px;margin:6px auto 0;\">${fig}</div>`;\n}\n"},{"methodName":"interpretQuiet","source":"shinyInput('krank')"},{"methodName":"interpretQuiet","source":"shinyInput('theta')"}]}
+    </script>
+    <script type="module">
+    window._ojs.paths.runtimeToDoc = "../../..";
+    window._ojs.paths.runtimeToRoot = "../../..";
+    window._ojs.paths.docToRoot = "";
+    window._ojs.selfContained = false;
+    window._ojs.runtime.interpretFromScriptTags();
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+    window.document.addEventListener("DOMContentLoaded", function (event) {
+      const toggleBodyColorMode = (bsSheetEl) => {
+        const mode = bsSheetEl.getAttribute("data-mode");
+        const bodyEl = window.document.querySelector("body");
+        if (mode === "dark") {
+          bodyEl.classList.add("quarto-dark");
+          bodyEl.classList.remove("quarto-light");
+        } else {
+          bodyEl.classList.add("quarto-light");
+          bodyEl.classList.remove("quarto-dark");
+        }
+      }
+      const toggleBodyColorPrimary = () => {
+        const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+        if (bsSheetEl) {
+          toggleBodyColorMode(bsSheetEl);
+        }
+      }
+      toggleBodyColorPrimary();  
+      const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+      tabsets.forEach(function(tabset) {
+        const tabby = new Tabby('#' + tabset.id);
+      });
+      const clipboard = new window.ClipboardJS('.code-copy-button', {
+        target: function(trigger) {
+          return trigger.previousElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        // button target
+        const button = e.trigger;
+        // don't keep focus
+        button.blur();
+        // flash "checked"
+        button.classList.add('code-copy-button-checked');
+        var currentTitle = button.getAttribute("title");
+        button.setAttribute("title", "Copied!");
+        setTimeout(function() {
+          button.setAttribute("title", currentTitle);
+          button.classList.remove('code-copy-button-checked');
+        }, 1000);
+        // clear code selection
+        e.clearSelection();
+      });
+      function tippyHover(el, contentFn) {
+        const config = {
+          allowHTML: true,
+          content: contentFn,
+          maxWidth: 500,
+          delay: 100,
+          arrow: false,
+          appendTo: function(el) {
+              return el.closest('section.slide') || el.parentElement;
+          },
+          interactive: true,
+          interactiveBorder: 10,
+          theme: 'quarto-reveal',
+          placement: 'bottom-start'
+        };
+          config['offset'] = [0,0];
+          config['maxWidth'] = 700;
+        window.tippy(el, config); 
+      }
+      const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+      for (var i=0; i<noterefs.length; i++) {
+        const ref = noterefs[i];
+        tippyHover(ref, function() {
+          // use id or data attribute instead here
+          let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+          try { href = new URL(href).hash; } catch {}
+          const id = href.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          return note.innerHTML;
+        });
+      }
+      var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+      for (var i=0; i<bibliorefs.length; i++) {
+        const ref = bibliorefs[i];
+        const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+        tippyHover(ref, function() {
+          var popup = window.document.createElement('div');
+          cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    });
+    </script>
+    <div class="uthsc-footer-bar">
+      <div class="uthsc-left">
+        <img src="assets/uthsc-logo-horizontal.png" alt="University of Tennessee Health Sciences">
+      </div>
+      <div class="uthsc-right">
+        Department of Preventive Medicine / Biostatistics
+      </div>
+    </div>
+
+    <div class="uthsc-seal-badge">
+      <img src="assets/uthsc-seal.png" alt="UTHSC College of Medicine seal">
+    </div>
+
+    <a class="home-btn" href="#outline" title="Go to Outline" aria-label="Go to Outline">
+      <svg viewbox="0 0 24 24" aria-hidden="true">
+        <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path>
+      </svg>
+    </a>
+    
+
+</body></html>

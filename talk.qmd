@@ -1,0 +1,561 @@
+---
+# Title/author/date are set on the custom title slide (first slide) below,
+# built the same way as the Thank-You slide so the look is fully controlled.
+pagetitle: "Matrix Decomposition Package for Metabolomics"
+
+format:
+  revealjs:
+    theme: [default, custom.scss]
+    css: styles.css
+
+    # Slide geometry
+    width: 1280
+    height: 720
+    margin: 0.05
+    center: false
+
+    # Navigation & behavior
+    transition: slide
+    background-transition: fade
+    slide-number: true
+    progress: true
+    controls: true
+    hash: true
+    preview-links: true
+    incremental: false
+    chalkboard: true
+    code-line-numbers: true
+
+    # Math rendering
+    html-math-method: katex
+
+    # Fonts & head includes (Montserrat = UTHSC's open-source brand font)
+    include-in-header:
+      text: |
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+    # Footer + Home button + Seal badge
+    include-after-body:
+      text: |
+        <div class="uthsc-footer-bar">
+          <div class="uthsc-left">
+            <img src="assets/uthsc-logo-horizontal.png" alt="University of Tennessee Health Sciences">
+          </div>
+          <div class="uthsc-right">
+            Department of Preventive Medicine / Biostatistics
+          </div>
+        </div>
+
+        <div class="uthsc-seal-badge">
+          <img src="assets/uthsc-seal.png" alt="UTHSC College of Medicine seal">
+        </div>
+
+        <a class="home-btn" href="#outline" title="Go to Outline" aria-label="Go to Outline">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+          </svg>
+        </a>
+
+resources:
+  - styles.css
+  - assets
+---
+
+## {.titlepage data-background-image="assets/uthsc-building-faded.png" data-background-size="cover" data-background-position="center" data-background-color="#ffffff"}
+
+<div class="titlepage-slide">
+<div class="titlepage-content">
+
+<img class="tp-logo" src="assets/uthsc-logo-centered.png" alt="University of Tennessee Health Sciences">
+
+<p class="tp-title">
+  Julia Package for Large Matrix Decomposition in Metabolomics: BigRiverSchneiden
+  <svg viewBox="0 0 24 24" width="0.85em" height="0.95em" style="vertical-align:-0.08em;fill:#E78824;" aria-hidden="true">
+    <path d="M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3z"/>
+  </svg>
+</p>
+<p class="tp-author">Abhisek Banerjee</p>
+<p class="tp-institute">UT Health Science Center — Preventive Medicine / Biostatistics</p>
+
+
+</div>
+</div>
+
+## Outline {#outline}
+
+<div class="toc-card">
+
+1. [The data: metabolomics](#data)
+2. [The challenge](#challenge)
+3. [PCA — the main patterns](#pca)
+4. [PLS — patterns tied to an outcome](#pls)
+5. [Spin it yourself](#explore)
+6. [The project](#project)
+
+</div>
+
+
+## The data: metabolomics {#data}
+
+Metabolomics measures the thousands of small molecules called metabolites which the body produces through metabolism, giving a chemical snapshot of a person's state. Each sample (e.g. blood or urine) is profiled for thousands of metabolites, and stacking many samples gives one very large matrix with samples in rows, metabolites in columns.
+
+```{ojs}
+//----------------------------------------------------------------------
+// SHARED SETUP (defined once, available to every slide in the deck)
+//----------------------------------------------------------------------
+d3 = require("d3@7")
+
+makeRng = function (seed) {
+  let s = seed >>> 0;
+  return function () {
+    s = (s + 0x6d2b79f5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), 1 | t);
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+randn = function (rng) {
+  let u = 0, v = 0;
+  while (u === 0) u = rng();
+  while (v === 0) v = rng();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+// Two groups. Big spread along x (drives total variance) but the groups
+// only differ along y (the thing we actually care about).
+data = {
+  const rng = makeRng(42);
+  const pts = [];
+  const N = 110;
+  for (let i = 0; i < N; i++) pts.push({ x: randn(rng) * 2.6, y:  1.3 + randn(rng) * 0.55, g: 0 });
+  for (let i = 0; i < N; i++) pts.push({ x: randn(rng) * 2.6, y: -1.3 + randn(rng) * 0.55, g: 1 });
+  return pts;
+}
+
+meanVec = ({ x: d3.mean(data, d => d.x), y: d3.mean(data, d => d.y) })
+
+// PCA direction = top eigenvector of the 2x2 covariance matrix.
+pcaDir = {
+  const mx = meanVec.x, my = meanVec.y;
+  let a = 0, b = 0, c = 0;
+  for (const d of data) { const dx = d.x - mx, dy = d.y - my; a += dx * dx; b += dx * dy; c += dy * dy; }
+  const n = data.length; a /= n; b /= n; c /= n;
+  const tr = a + c, det = a * c - b * b;
+  const lam = tr / 2 + Math.sqrt(Math.max(0, (tr * tr) / 4 - det));
+  const v1x = b, v1y = lam - a;
+  const v2x = lam - c, v2y = b;
+  let vx, vy;
+  if (Math.hypot(v1x, v1y) >= Math.hypot(v2x, v2y)) { vx = v1x; vy = v1y; } else { vx = v2x; vy = v2y; }
+  const nrm = Math.hypot(vx, vy) || 1;
+  return { x: vx / nrm, y: vy / nrm };
+}
+
+// PLS direction (single outcome) = normalized covariance of features with the label.
+plsDir = {
+  const mx = meanVec.x, my = meanVec.y;
+  let wx = 0, wy = 0;
+  for (const d of data) { const yy = d.g === 0 ? 1 : -1; wx += (d.x - mx) * yy; wy += (d.y - my) * yy; }
+  const nrm = Math.hypot(wx, wy) || 1;
+  return { x: wx / nrm, y: wy / nrm };
+}
+
+kde = function (values, bw, xs) {
+  return xs.map(x => {
+    let s = 0;
+    for (const v of values) { const u = (x - v) / bw; s += Math.exp(-0.5 * u * u); }
+    return [x, s / (values.length * bw * Math.sqrt(2 * Math.PI))];
+  });
+}
+
+// standardized separation between the two groups along a projection direction
+separation = function (ts) {
+  const t0 = ts.filter((_, i) => data[i].g === 0);
+  const t1 = ts.filter((_, i) => data[i].g === 1);
+  const m0 = d3.mean(t0), m1 = d3.mean(t1);
+  const v0 = d3.variance(t0), v1 = d3.variance(t1);
+  const sd = Math.sqrt((v0 + v1) / 2) || 1e-9;
+  return Math.abs(m0 - m1) / sd;
+}
+
+// the drawing routine: takes ANY direction and renders scatter + projection
+figure = function (dir, leftLabel) {
+  const aid = "arrowhd-" + Math.random().toString(36).slice(2);
+  const W = 1000, H = 380;
+  const colors = ["#E78824", "#007E5A"];
+  const names = ["Group A", "Group B"];
+
+  const svg = d3.create("svg")
+    .attr("viewBox", `0 0 ${W} ${H}`)
+    .style("width", "100%").style("height", "auto")
+    .style("font-family", "inherit");
+
+  // ---- left: scatter (equal aspect so the arrow direction is honest) ----
+  const sx0 = 30, sy0 = 40, sW = 560, sH = 300;
+  const yhalf = (sH / sW) * 8.5;
+  const sx = d3.scaleLinear().domain([-8.5, 8.5]).range([sx0, sx0 + sW]);
+  const sy = d3.scaleLinear().domain([-yhalf, yhalf]).range([sy0 + sH, sy0]);
+
+  svg.append("rect").attr("x", sx0).attr("y", sy0).attr("width", sW).attr("height", sH)
+    .attr("fill", "none").attr("stroke", "rgba(0,0,0,0.15)").attr("rx", 10);
+
+  const mx = meanVec.x, my = meanVec.y;
+  const ts = data.map(d => (d.x - mx) * dir.x + (d.y - my) * dir.y);
+  const tmin = d3.min(ts), tmax = d3.max(ts);
+  const tpad = (tmax - tmin) * 0.08 + 1e-6;
+  const aLo = { x: mx + (tmin - tpad) * dir.x, y: my + (tmin - tpad) * dir.y };
+  const aHi = { x: mx + (tmax + tpad) * dir.x, y: my + (tmax + tpad) * dir.y };
+
+  data.forEach((d, i) => {
+    const t = ts[i];
+    svg.append("line")
+      .attr("x1", sx(d.x)).attr("y1", sy(d.y))
+      .attr("x2", sx(mx + t * dir.x)).attr("y2", sy(my + t * dir.y))
+      .attr("stroke", colors[d.g]).attr("stroke-width", 1).attr("opacity", 0.12);
+  });
+
+  svg.append("defs").append("marker")
+    .attr("id", aid).attr("viewBox", "0 0 10 10")
+    .attr("refX", 8).attr("refY", 5).attr("markerWidth", 7).attr("markerHeight", 7)
+    .attr("orient", "auto-start-reverse")
+    .append("path").attr("d", "M0,0 L10,5 L0,10 z").attr("fill", "#2b2b2b");
+  svg.append("line")
+    .attr("x1", sx(aLo.x)).attr("y1", sy(aLo.y))
+    .attr("x2", sx(aHi.x)).attr("y2", sy(aHi.y))
+    .attr("stroke", "#2b2b2b").attr("stroke-width", 2.5).attr("marker-end", `url(#${aid})`);
+
+  data.forEach((d, i) => {
+    const t = ts[i];
+    svg.append("circle").attr("cx", sx(mx + t * dir.x)).attr("cy", sy(my + t * dir.y))
+      .attr("r", 3).attr("fill", colors[d.g]).attr("opacity", 0.55);
+  });
+
+  data.forEach(d => {
+    svg.append("circle").attr("cx", sx(d.x)).attr("cy", sy(d.y)).attr("r", 4.5)
+      .attr("fill", colors[d.g]).attr("opacity", 0.9)
+      .attr("stroke", "white").attr("stroke-width", 0.8);
+  });
+
+  svg.append("text").attr("x", sx0).attr("y", 26).attr("font-size", 15).attr("font-weight", 700).attr("fill", "#333")
+    .text(leftLabel);
+
+  const lg = svg.append("g").attr("transform", `translate(${sx0 + sW - 150},${sy0 + 12})`);
+  names.forEach((nm, i) => {
+    lg.append("circle").attr("cx", 0).attr("cy", i * 20).attr("r", 6).attr("fill", colors[i]);
+    lg.append("text").attr("x", 12).attr("y", i * 20 + 4).attr("font-size", 13).attr("fill", "#333").text(nm);
+  });
+
+  // ---- right: distribution after projecting ----
+  const px0 = 640, py0 = 40, pW = 330, pH = 300;
+  svg.append("text").attr("x", px0).attr("y", 26).attr("font-size", 15).attr("font-weight", 700).attr("fill", "#333")
+    .text("After projecting onto that line");
+
+  const tsc = d3.scaleLinear().domain([tmin - tpad, tmax + tpad]).range([px0, px0 + pW]);
+  svg.append("line").attr("x1", px0).attr("y1", py0 + pH).attr("x2", px0 + pW).attr("y2", py0 + pH)
+    .attr("stroke", "rgba(0,0,0,0.3)").attr("stroke-width", 1.5);
+
+  const bw = 0.45 * (d3.deviation(ts) || 1);
+  const grid = d3.range(60).map(k => (tmin - tpad) + (k / 59) * ((tmax + tpad) - (tmin - tpad)));
+  const g0 = kde(ts.filter((_, i) => data[i].g === 0), bw, grid);
+  const g1 = kde(ts.filter((_, i) => data[i].g === 1), bw, grid);
+  const maxd = d3.max([...g0, ...g1], d => d[1]) || 1;
+  const dsc = d3.scaleLinear().domain([0, maxd]).range([py0 + pH, py0 + 44]);
+
+  const area = d3.area().x(d => tsc(d[0])).y0(py0 + pH).y1(d => dsc(d[1])).curve(d3.curveBasis);
+  svg.append("path").attr("d", area(g0)).attr("fill", colors[0]).attr("opacity", 0.45);
+  svg.append("path").attr("d", area(g1)).attr("fill", colors[1]).attr("opacity", 0.45);
+
+  const lineg = d3.line().x(d => tsc(d[0])).y(d => dsc(d[1])).curve(d3.curveBasis);
+  svg.append("path").attr("d", lineg(g0)).attr("fill", "none").attr("stroke", colors[0]).attr("stroke-width", 2);
+  svg.append("path").attr("d", lineg(g1)).attr("fill", "none").attr("stroke", colors[1]).attr("stroke-width", 2);
+
+  data.forEach((d, i) => {
+    svg.append("line").attr("x1", tsc(ts[i])).attr("y1", py0 + pH).attr("x2", tsc(ts[i])).attr("y2", py0 + pH - 7)
+      .attr("stroke", colors[d.g]).attr("stroke-width", 1).attr("opacity", 0.5);
+  });
+
+  // live separation readout
+  const sep = separation(ts);
+  svg.append("text").attr("x", px0 + pW).attr("y", py0 + 16).attr("text-anchor", "end")
+    .attr("font-size", 14).attr("font-weight", 800)
+    .attr("fill", sep > 1.2 ? "#007E5A" : "#b06a1f")
+    .text(`Group separation: ${sep.toFixed(2)}`);
+
+  return svg.node();
+}
+
+panel = function (method) {
+  return method === "pca"
+    ? figure(pcaDir, "PC₁ direction (most variation)")
+    : figure(plsDir, "PLS₁ direction (linked to outcome)");
+}
+```
+
+```{ojs}
+heatmap = {
+  const cols = 44, rows = 16;
+  const rng = makeRng(7);
+  const W = 920, H = 250, pad = { t: 34, r: 20, b: 24, l: 60 };
+  const cw = (W - pad.l - pad.r) / cols, ch = (H - pad.t - pad.b) / rows;
+  const color = d3.scaleSequential(d3.interpolateOranges).domain([0, 1]);
+
+  const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`)
+    .style("width", "100%").style("height", "auto").style("font-family", "inherit");
+
+  for (let i = 0; i < rows; i++)
+    for (let j = 0; j < cols; j++)
+      svg.append("rect")
+        .attr("x", pad.l + j * cw).attr("y", pad.t + i * ch)
+        .attr("width", cw - 1).attr("height", ch - 1).attr("rx", 1)
+        .attr("fill", color(Math.pow(rng(), 1.4)));
+
+  svg.append("text").attr("x", pad.l).attr("y", 22).attr("font-weight", 700).attr("font-size", 15).attr("fill", "#333")
+    .text("metabolites  (thousands of columns →)");
+  const cy = pad.t + (H - pad.t - pad.b) / 2;
+  svg.append("text").attr("x", 16).attr("y", cy).attr("transform", `rotate(-90 16 ${cy})`)
+    .attr("text-anchor", "middle").attr("font-weight", 700).attr("font-size", 15).attr("fill", "#333")
+    .text("samples ↓");
+
+  return svg.node();
+}
+```
+
+
+## The challenge {#challenge}
+
+A table with thousands of columns is very difficult to read directly, we just can't eyeball patterns across that many measurements.
+
+We want to squeeze thousands of numbers into a few meaningful directions that still capture what's going on. We will perform this using matrix decomposition.
+
+<br>
+
+```{ojs}
+// ---- definitions (named cells render nothing) ----
+decomp = {
+  const n = 24, p = 56, R = 6;
+  const rng = (() => { let s = 11 >>> 0; return () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), 1 | t); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; })();
+  const s = [9, 6, 4.5, 3, 2, 1.2];
+  const U = [], V = [];
+  for (let r = 0; r < R; r++) {
+    const ph = rng() * Math.PI * 2, ph2 = rng() * Math.PI * 2;
+    const ur = [], vr = [];
+    for (let i = 0; i < n; i++) ur.push(Math.cos(Math.PI * (r + 1) * i / n + ph));
+    for (let j = 0; j < p; j++) vr.push(Math.cos(Math.PI * (r + 1) * j / (p / 3) + ph2));
+    const nu = Math.hypot(...ur) || 1, nv = Math.hypot(...vr) || 1;
+    U.push(ur.map(x => x / nu)); V.push(vr.map(x => x / nv));
+  }
+  const noise = [];
+  for (let i = 0; i < n; i++) { const row = []; for (let j = 0; j < p; j++) row.push(0.04 * (rng() * 2 - 1)); noise.push(row); }
+  const M = [];
+  for (let i = 0; i < n; i++) { const row = []; for (let j = 0; j < p; j++) { let v = noise[i][j]; for (let r = 0; r < R; r++) v += s[r] * U[r][i] * V[r][j]; row.push(v); } M.push(row); }
+  const maxAbs = d3.max(M.flat(), v => Math.abs(v));
+  const uMax = d3.max(U.flat(), v => Math.abs(v)) || 1;
+  const vMax = d3.max(V.flat(), v => Math.abs(v)) || 1;
+  const totalEnergy = s.reduce((a, b) => a + b * b, 0) + d3.sum(noise.flat(), v => v * v);
+  return { n, p, R, s, U, V, M, maxAbs, uMax, vMax, totalEnergy };
+}
+
+recon = function (k) {
+  const { n, p, U, V, s } = decomp;
+  const out = [];
+  for (let i = 0; i < n; i++) { const row = []; for (let j = 0; j < p; j++) { let v = 0; for (let r = 0; r < k; r++) v += s[r] * U[r][i] * V[r][j]; row.push(v); } out.push(row); }
+  return out;
+}
+
+decompColor = d3.scaleSequential(d3.interpolateRgbBasis(["#0a7d63", "#f4f1ec", "#E78824"])).domain([-decomp.maxAbs, decomp.maxAbs])
+factorColor = d3.scaleSequential(d3.interpolateRgbBasis(["#0a7d63", "#f4f1ec", "#E78824"])).domain([-1, 1])
+
+drawDecomp = function (k) {
+  const { n, p, M, U, V, s, uMax, vMax, totalEnergy } = decomp;
+  const cw = 5, W = 1000, H = 240;
+  const Mk = recon(k);
+  const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`)
+    .style("width", "100%").style("height", "auto").style("font-family", "inherit");
+
+  const block = (get, rows, cols, x, y, color) => {
+    for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++)
+      svg.append("rect").attr("x", x + j * cw).attr("y", y + i * cw)
+        .attr("width", cw - 0.4).attr("height", cw - 0.4).attr("fill", color(get(i, j)));
+  };
+  const txt = (t, x, y, o = {}) => svg.append("text").attr("x", x).attr("y", y)
+    .attr("font-size", o.size || 13).attr("font-weight", o.w || 700)
+    .attr("fill", o.fill || "#333").attr("text-anchor", o.anchor || "start").text(t);
+
+  const y0 = 44;
+  txt("M  (n × p)", 10, y0 - 8);
+  block((i, j) => M[i][j], n, p, 10, y0, decompColor);
+
+  txt("≈", 10 + p * cw + 12, y0 + n * cw / 2 + 6, { size: 24, w: 800, anchor: "middle" });
+
+  const xU = 10 + p * cw + 34;
+  txt("U", xU, y0 - 8);
+  block((i, r) => U[r][i] / uMax, n, k, xU, y0, factorColor);
+
+  const xMul = xU + k * cw + 8;
+  txt("×", xMul, y0 + n * cw / 2 + 5, { size: 18, w: 800, anchor: "middle" });
+
+  const xV = xMul + 14;
+  txt("V", xV, y0 - 8);
+  block((r, j) => V[r][j] / vMax, k, p, xV, y0, factorColor);
+
+  const xArr = xV + p * cw + 14;
+  txt("→", xArr, y0 + n * cw / 2 + 6, { size: 22, w: 800, anchor: "middle" });
+
+  const xR = xArr + 18;
+  txt(`Rebuilt (k = ${k})`, xR, y0 - 8);
+  block((i, j) => Mk[i][j], n, p, xR, y0, decompColor);
+
+  const pct = (s.slice(0, k).reduce((a, b) => a + b * b, 0) / totalEnergy) * 100;
+  const bx = 10, by = y0 + n * cw + 26, bw = 520, bh = 20;
+  txt("Variation captured", bx, by - 6);
+  svg.append("rect").attr("x", bx).attr("y", by).attr("width", bw).attr("height", bh).attr("rx", 5).attr("fill", "#eee");
+  svg.append("rect").attr("x", bx).attr("y", by).attr("width", bw * pct / 100).attr("height", bh).attr("rx", 5).attr("fill", "#E78824");
+  txt(`${pct.toFixed(0)}%`, bx + bw + 10, by + bh - 3, { w: 800, size: 16, fill: "#E78824" });
+
+  const full = n * p, comp = k * (n + p);
+  txt(`Stored: k·(n+p) = ${comp}  vs  n·p = ${full}   (${(comp / full * 100).toFixed(0)}% of the original — real p is in the thousands)`,
+    bx, by + bh + 20, { size: 12, w: 600, fill: "#777" });
+
+  return svg.node();
+}
+
+// ---- compact one-row control (own font size, no wrapping) ----
+viewof krank = {
+  const max = decomp.R;
+  const cont = html`<div style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;font-size:18px;font-family:inherit;margin:4px 0 6px;"></div>`;
+  const range = html`<input type="range" min="1" max="${max}" step="1" value="1" style="width:240px;accent-color:#E78824;">`;
+  const val = html`<span style="font-weight:800;color:#E78824;min-width:1.2em;">1</span>`;
+  const sweep = html`<button style="padding:6px 14px;border:0;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:15px;background:#007E5A;">▶ Add one by one</button>`;
+  const set = v => { range.value = v; val.textContent = v; cont.value = +v; cont.dispatchEvent(new Event("input", { bubbles: true })); };
+  range.oninput = () => set(range.value);
+  sweep.onclick = () => { let k = 1; set(1); const id = setInterval(() => { k++; if (k > max) { clearInterval(id); return; } set(k); }, 450); };
+  cont.value = 1;
+  cont.append(html`<span style="font-weight:700;white-space:nowrap;">Components (k):</span>`, range, val, sweep);
+  return cont;
+}
+
+// ---- the figure (capped width so it can't blow up on wide screens) ----
+html`<div style="max-width:1040px;margin:6px auto 0;">${drawDecomp(krank)}</div>`
+```
+
+
+
+## PCA — the main patterns {#pca}
+
+PCA looks at the data table on its own and asks: along which direction do the samples vary the most? That direction (**PC₁**) often reveals natural groupings — clans or subclasses — even though it was never told they exist.
+
+```{ojs}
+panel("pca")
+```
+
+*PCA is **unsupervised**. The biggest source of variation isn't always what you care about — here the groups stay mixed, and the separation score is near zero.*
+
+
+## PLS — patterns tied to an outcome {#pls}
+
+PLS uses the data table and an outcome (e.g. disease vs. healthy). It looks for directions that vary across samples and track that outcome so the groups we want are cleanly apart. 
+
+ Same data, but the outcome guides the direction hence the separation score jumps up.
+
+```{ojs}
+panel("pls")
+```
+
+
+
+
+## Spin it yourself {#explore}
+
+Drag the angle, or hit a button to animate the projection line to what PCA vs. PLS would choose. Watch the separation score (top-right) rise and fall.
+
+```{ojs}
+viewof theta = {
+  const toDeg = v => ((Math.atan2(v.y, v.x) * 180 / Math.PI) % 180 + 180) % 180;
+  const pcaA = toDeg(pcaDir);
+  const plsA = toDeg(plsDir);
+
+  const cont = html`<div style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;font-size:18px;font-family:inherit;margin:4px 0 8px;"></div>`;
+  const range = html`<input type="range" min="0" max="180" step="0.5" value="0" style="width:240px;accent-color:#E78824;">`;
+  const val = html`<span style="font-weight:800;color:#E78824;min-width:2.8em;">0°</span>`;
+  const bStyle = "padding:6px 14px;border:0;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:15px;";
+  const bPCA = html`<button style="${bStyle}background:#E78824;">▶ to PCA</button>`;
+  const bPLS = html`<button style="${bStyle}background:#007E5A;">▶ to PLS</button>`;
+
+  const set = v => {
+    range.value = v;
+    val.textContent = (+v).toFixed(0) + "°";
+    cont.value = +v;
+    cont.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+  range.oninput = () => set(range.value);
+
+  let raf;
+  const animateTo = target => {
+    cancelAnimationFrame(raf);
+    const start = +cont.value, t0 = performance.now(), dur = 750;
+    const step = now => {
+      const k = Math.min(1, (now - t0) / dur);
+      const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      set(start + (target - start) * e);
+      if (k < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+  };
+  bPCA.onclick = () => animateTo(pcaA);
+  bPLS.onclick = () => animateTo(plsA);
+
+  cont.value = 0;
+  cont.append(
+    html`<span style="font-weight:700;white-space:nowrap;">Projection angle:</span>`,
+    range, val, bPCA, bPLS
+  );
+  return cont;
+}
+```
+
+```{ojs}
+{
+  const th = theta * Math.PI / 180;
+  const fig = figure({ x: Math.cos(th), y: Math.sin(th) }, "Your chosen projection");
+  return html`<div style="max-width:1040px;margin:6px auto 0;">${fig}</div>`;
+}
+```
+
+
+
+
+
+## The project {#project}
+
+
+- Build a Julia package implementing PCA, PLS, PMD, and related decompositions.
+- Engineered for the very large matrices typical for metabolomics having thousands of metabolites across many samples.
+- A clean, consistent light package meant to be a shared foundation for further biostatistics packages in the department.
+- Why Julia: near-C performance with readable high-level.
+
+
+<br>
+
+<div class="uthsc-green-box">
+
+The aim: a fast, reusable decomposition toolkit
+that other department projects can build on.
+
+</div>
+
+
+## {data-background-image="assets/uthsc-building-faded.png" data-background-size="cover" data-background-position="center" data-background-color="#ffffff"}
+
+<div class="thankyou-slide">
+
+<div class="thankyou-content">
+
+Thank you for your attention!
+
+</div>
+
+</div>
