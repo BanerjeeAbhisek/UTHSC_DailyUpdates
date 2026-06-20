@@ -732,13 +732,326 @@ JIVE = PCA with a **single common score matrix $S$ across all data types**, plus
 
 
 
+# Part 2 — Making it fast {#opt}
+
+I took my existing decomposition functions (PCA, PMD, PLS, sPLS‑DA, JIVE) and optimized the hot loops — same math, same results, far fewer allocations.
+
+# How I optimized {#opt-method}
+
+<style>
+#opt-method .opt-chips { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:12px; }
+#opt-method .opt-chip { font:700 12.5px inherit; padding:5px 11px; border-radius:20px; cursor:pointer;
+  border:1.5px solid #ddd; background:#fff; color:#555; transition:all .12s; }
+#opt-method .opt-chip:hover { border-color:#E78824; color:#C14C23; }
+#opt-method .opt-chip.on { background:#E78824; border-color:#E78824; color:#fff; }
+#opt-method pre { margin:0; }
+</style>
+
+```{ojs}
+optFrames = [
+  {
+    tag: "#1 Preallocate", title: "Allocate buffers once, reuse them",
+    body: "Work arrays built inside a loop are re-allocated every pass. Create them once, outside, and overwrite in place.",
+    bad: `for it in 1:iters\n    uh = Vector{Float64}(undef, p)   # new array each pass\n    ...\nend`,
+    good: `uh = Vector{Float64}(undef, p)       # once\nfor it in 1:iters\n    # reuse uh every pass\nend`,
+    win: "Foundation of every function — removes repeated loop allocations."
+  },
+  {
+    tag: "#2 mul!", title: "In-place matrix multiply",
+    body: "C = A*B allocates a fresh C each call. mul!(C,A,B) writes into an existing buffer.",
+    bad: `tY   = Ry * vh        # allocates\nuraw = R' * tY        # allocates`,
+    good: `mul!(tY, Ry, vh)              # tY = Ry*vh\nmul!(uraw, transpose(R), tY)  # no temporaries`,
+    win: "Removes the per-iteration matmul allocations."
+  },
+  {
+    tag: "#3 Fused mul!", title: "Fused multiply–add",
+    body: "mul!(C,A,B,α,β) computes C = α·A·B + β·C in one call — subtract a product in place, no temporary.",
+    bad: `C = C - A*B           # allocates A*B`,
+    good: `mul!(C, A, B, -1.0, 1.0)     # C = C - A*B, in place`,
+    win: "Eliminates temporaries in accumulate/subtract steps."
+  },
+  {
+    tag: "#4 BLAS.ger!", title: "Rank-1 update without forming a matrix",
+    body: "Deflation R = R − t·p' builds a whole n×p matrix. ger! applies the rank-1 update in place.",
+    bad: `R = R - tX * pX'      # forms n×p matrix`,
+    good: `BLAS.ger!(-1.0, tX, pX, R)   # R -= tX*pX'`,
+    win: "PMD: ~7000× fewer allocations, 340× less memory, 1.5× faster."
+  },
+  {
+    tag: "#5 syrk!", title: "Symmetric products",
+    body: "X'X is symmetric — syrk! computes only one triangle instead of the full product.",
+    bad: `C = X' * X            # full product`,
+    good: `BLAS.syrk!('U','T', 1.0, X, 0.0, C)  # half the work`,
+    win: "Cheaper Gram matrices where X'X appears."
+  },
+  {
+    tag: "#6 @view", title: "Reference slices, don't copy",
+    body: "X[:, i] copies the column into a new array; @view points at the same memory, so no copy is made.",
+    bad: `col = X[:, i]              # copies the column\nuh  = F.U[:, 1]            # copies again`,
+    good: `col = @view X[:, i]        # references, no copy\ncopyto!(uh, @view F.U[:, 1])  # write into uh, no copy`,
+    win: "Stops silent copies on every slice."
+  },
+  {
+    tag: "#7 In-place bcast", title: "Broadcast into existing arrays",
+    body: "Broadcasting with new bindings allocates;  @. write into the array you already have.",
+    bad: `absx = abs.(x)`,
+    good: `@. absx = abs(x)`,
+    win: "Centering, normalizing, abs — all allocation-free."
+  },
+  {
+    tag: "#8 svd!", title: "In-place SVD",
+    body: "svd!(A) overwrites A instead of copying it. Keep a robust fallback for degenerate matrices.",
+    bad: `F = svd(A)            # copies A`,
+    good: `F = svd!(A)                  # overwrites A\n# fallback: svd!(A; alg=QRIteration())`,
+    win: "Saves a full copy of the (often large) input."
+  },
+  {
+    tag: "#9 Algebra (JIVE)", title: "Never form a big projector",
+    body: "The orthogonality step needs (I − VVᵀ). Forming the n×n projector is the memory blowup; associativity avoids it.",
+    bad: `tmp * (I - V*V')      # forms n×n projector`,
+    good: `tmp .-= (tmp*V)*V'    # same result, small intermediates`,
+    win: "JIVE: 871 → 277 MiB. The single biggest win."
+  },
+  {
+    tag: "#10 Reductions", title: "Allocation-free convergence checks",
+    body: "‖a−b‖² written as sum(abs2, a .- b) allocates the difference each check. A manual @simd loop doesn't.",
+    bad: `delta = sum(abs2, a .- b)   # allocates a .- b`,
+    good: `s = 0.0\n@inbounds @simd for i in eachindex(a)\n    d = a[i]-b[i]; s += d*d\nend`,
+    win: "Hot convergence checks stop allocating entirely."
+  },
+  {
+    tag: "#11 sortperm!", title: "In-place sort",
+    body: "sortperm(x) allocates the index vector; sortperm!(ord, x) reuses a preallocated one.",
+    bad: `ord = sortperm(absx)        # allocates`,
+    good: `sortperm!(ord, absx)        # ord preallocated`,
+    win: "No allocation in ranking/threshold steps."
+  },
+{
+  tag: "#15 Thin SVD", title: "Compute only the vectors you need",
+  body: "A full SVD builds every singular vector; PCA/JIVE use only the leading ones. The thin form computes just those and skips the rest.",
+  bad:  `F = svd(A)             # full: all singular vectors`,
+  good: `F = svd(A; full=false) # thin: only the leading vectors`,
+  win:  "Less compute and memory whenever you only need the top components."
+}
+];
+```
+
+```{ojs}
+viewof optStep = {
+  const wrap = html`<div></div>`;
+  const chips = html`<div class="opt-chips"></div>`;
+  const els = optFrames.map((f,k)=>{
+    const c = html`<span class="opt-chip">${f.tag}</span>`;
+    c.onclick = () => { wrap.value=k; render(); wrap.dispatchEvent(new CustomEvent("input")); };
+    return c;
+  });
+  chips.append(...els);
+  const render = () => els.forEach((c,k)=>c.classList.toggle("on", k===wrap.value));
+  wrap.append(chips);
+  wrap.value = 0; render();
+  return wrap;
+}
+```
+
+```{ojs}
+optView = {
+  const f = optFrames[optStep];
+  const Od="#C14C23", G="#4D701F", ink="#2a2a2a", O="#E78824";
+  const card = html`<div style="border:2px solid #eee;border-top:5px solid ${O};border-radius:14px;padding:14px 20px;background:#fff;min-height:280px"></div>`;
+  card.append(html`<div style="font:800 22px inherit;color:${Od};margin-bottom:4px">${f.title}</div>`);
+  card.append(html`<div style="font:400 15.5px inherit;color:${ink};margin-bottom:12px">${f.body}</div>`);
+
+  const grid = html`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px"></div>`;
+  const codebox = (label,code,color)=>{
+    const b = html`<div></div>`;
+    b.append(html`<div style="font:700 12px inherit;color:${color};margin-bottom:4px">${label}</div>`);
+    const pre = html`<pre style="background:#f6f6f4;border-left:4px solid ${color};border-radius:6px;padding:10px 12px;font:500 13px ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow:auto"></pre>`;
+    pre.textContent = code; b.append(pre); return b;
+  };
+  grid.append(codebox("BEFORE", f.bad, "#b0b0b0"));
+  grid.append(codebox("AFTER", f.good, G));
+  card.append(grid);
+
+  card.append(html`<div style="margin-top:12px;background:#eef3e8;border-radius:8px;padding:8px 14px;font:700 14px inherit;color:${G}">→ ${f.win}</div>`);
+  return card;
+}
+```
+
+# What it bought {#opt-scorecard}
+Same outputs, leaner execution. Allocations fell everywhere; **time** moved only where allocations were the bottleneck.
+```{ojs}
+viewof _ = {
+  const rows = [
+    ["PCA",     "preallocate, @view, svd!, drop-sort",            "17×",   "1.2×",  "~flat"],
+    ["PMD",     "preallocate, mul!, BLAS.ger!, alloc-free",        "7000×", "340×",  "1.5× faster"],
+    ["PLS",     "preallocate, mul!, ger!, @view, lazy transpose",  "8×",    "~flat", "~flat"],
+    ["JIVE",    "preallocate, fused mul!, svd!, algebraic (I−VVᵀ)","3.7×",  "3.1×",  "29% faster"],
+    ["sPLS-DA", "preallocate, mul!, ger!, in-place bcast, sortperm!","6×",  "3×",    "12% faster"]
+  ];
+  const head = ["Function","Key tricks","Allocs ↓","Mem ↓","Time"];
+  const O="#E78824", G="#4D701F", ink="#2a2a2a";
+  const tbl = html`<table style="border-collapse:collapse;width:100%;font-size:15px;font-family:inherit"></table>`;
+
+  // header
+  const thead = html`<thead></thead>`;
+  const hrow = html`<tr></tr>`;
+  head.forEach((h,i)=>{
+    const th = html`<th>${h}</th>`;
+    th.style.cssText = `text-align:${i<2?'left':'center'};padding:7px 10px;border-bottom:2px solid ${O};color:${ink};font-weight:800`;
+    hrow.append(th);
+  });
+  thead.append(hrow);
+  tbl.append(thead);
+
+  // body
+  const tb = html`<tbody></tbody>`;
+  rows.forEach((r,ri)=>{
+    const tr = html`<tr></tr>`;
+    tr.style.background = ri%2 ? "#faf8f5" : "#ffffff";
+    r.forEach((c,ci)=>{
+      const td = html`<td>${c}</td>`;
+      const speed = ci>=2 && ci<=4 && /×|faster/.test(c);
+      td.style.cssText = `padding:6px 10px;text-align:${ci<2?'left':'center'};border-bottom:1px solid #eee;`+
+        (ci===0?`font-weight:800;color:${G};`:``)+
+        (speed?`font-weight:700;color:${O};`:``);
+      tr.append(td);
+    });
+    tb.append(tr);
+  });
+  tbl.append(tb);
+
+  return tbl;
+}
+```
+
+<br>
+
+<div class="uthsc-green-box" style="font-size:0.82em; padding:8px 14px;">
+Biggest single win: **JIVE's** $I-VV^{\top}$ projector. Forming the $n\times n$ matrix was the memory blowup — rewriting it as `tmp .-= (tmp*V)*V'` (same result, small intermediates) cut **871 → 277 MiB**.
+</div>
 
 
+# Part 3 — Sparse PLS-DA {#splsda}
+
+Classify samples *and* pick the handful of variables that matter — in one model.
+
+# Sparse PLS-DA: the idea {#splsda-why}
+
+You have **many variables, few samples** (thousands of genes, dozens of patients) and a **class label** per patient. sPLS-DA separates the classes with a *weighted combination of genes* — each gene's **weight** (its *loading*) says how much it matters — and an **L1 penalty** forces most weights to exactly **0**, leaving a short, named gene list.
+
+*Drag the slider: the penalty keeps only the strongest genes and zeroes the rest.*
+
+```{ojs}
+viewof keepX = Inputs.range([1, 50], {step: 1, value: 8, label: "Genes to keep (sparsity)"})
+```
+
+```{ojs}
+splsdaWhy = {
+  function mul(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  const rng=mul(9); const randn=()=>{let u=0,v=0;while(!u)u=rng();while(!v)v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
+
+  const p=50;
+  const truth = d3.range(p).map(i => i<10 ? (0.8+0.5*rng())*(i%2?-1:1) : 0);
+  const raw   = truth.map(t => t + 0.28*randn());            // fixed weights, never change
+  const order = d3.range(p).sort((a,b)=>Math.abs(raw[b])-Math.abs(raw[a]));
+  const keepSet = new Set(order.slice(0, keepX));            // top-keepX survive
+
+  const W=900,H=250,padL=46,padT=34,padB=34;
+  const m=d3.max(raw,d=>Math.abs(d))*1.1;
+  const O="#E78824", Od="#C14C23", grey="#dcdcdc";
+  const svg=d3.create("svg").attr("viewBox",`0 0 ${W} ${H}`)
+    .style("width","100%").style("max-width","880px").style("height","auto").style("display","block").style("margin","0 auto");
+
+  const x=d3.scaleBand().domain(d3.range(p)).range([padL,W-16]).padding(0.3);
+  const y=d3.scaleLinear().domain([-m,m]).range([H-padB,padT]);
+
+  svg.append("text").attr("transform",`translate(14,${(padT+H-padB)/2}) rotate(-90)`)
+     .attr("text-anchor","middle").attr("font-size",11).attr("fill","#777").text("gene weight");
+  svg.append("line").attr("x1",padL).attr("x2",W-16).attr("y1",y(0)).attr("y2",y(0)).attr("stroke","#ccc");
+
+  // bars are ALWAYS drawn at their true height; only the FILL changes with keepX
+  svg.append("g").selectAll("rect").data(d3.range(p)).join("rect")
+    .attr("x",i=>x(i)).attr("width",x.bandwidth())
+    .attr("y",i=>Math.min(y(0),y(raw[i])))
+    .attr("height",i=>Math.abs(y(raw[i])-y(0))+0.6)
+    .attr("fill",i=> keepSet.has(i) ? O : grey)
+    .style("transition","fill 0.25s ease");
+
+  const kept = Math.min(keepX,p);
+  svg.append("text").attr("x",W-16).attr("y",padT-12).attr("text-anchor","end")
+     .attr("font-size",14).attr("font-weight",800).attr("fill",Od)
+     .text(`${kept} of ${p} genes active`);
+  svg.append("text").attr("x",(padL+W-16)/2).attr("y",H-6).attr("text-anchor","middle")
+     .attr("font-size",11.5).attr("fill","#777").text("orange = kept by the penalty · grey = dropped (weight → 0)");
+  return svg.node();
+}
+```
+
+# The math {#splsda-math}
+
+- $X$ ($n\times p$) — data: $n$ samples × $p$ genes (centered/scaled)
+- $Y$ ($n\times k$) — labels as a 0/1 indicator, one column per class
+- $u$ ($p$) — **gene loadings**, one weight per gene (made sparse)
+- $v$ ($k$) — **class loadings**, one weight per class
+
+**The goal** — choose $u,v$ so the weighted genes and weighted classes agree as strongly as possible, using only a few genes:
+
+$$\max_{u,\,v}\ \underbrace{u^{\top}X^{\top}Y\,v}_{X\text{–}Y\text{ agreement}}\quad\text{s.t.}\quad \|u\|_2=\|v\|_2=1,\ \ \underbrace{\|u\|_0\le \texttt{keepX}}_{\le\,\text{keepX genes}}$$
+
+- Scores: $t_X = Xu,\quad t_Y = Yv$
+- Sparsity via **soft-thresholding** $S(a,\lambda)=\operatorname{sign}(a)(|a|-\lambda)_+$, with $\lambda$ chosen so exactly `keepX` weights survive
 
 
+<!--
+# The algorithm {#splsda-algo}
 
+For each component, alternate two updates until the loadings settle — then deflate and move to the next.
 
+```{ojs}
+viewof sdaStep = {
+  const labels=["① Initialize","② Update u (sparse)","③ Update v","④ Converged?","⑤ Deflate X"];
+  const wrap=html`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>`;
+  const els=labels.map((t,k)=>{ const b=html`<button>${t}</button>`;
+    b.style.cssText="font:700 13px inherit;padding:6px 13px;border-radius:9px;border:2px solid #cfcfcf;background:#fbfbfa;color:#2a2a2a;cursor:pointer";
+    b.onclick=()=>{wrap.value=k;render();wrap.dispatchEvent(new CustomEvent("input"));}; return b; });
+  els.forEach(e=>wrap.append(e));
+  const render=()=>els.forEach((b,k)=>{ const on=k===wrap.value;
+    b.style.borderColor=on?"#C14C23":"#cfcfcf"; b.style.background=on?"#fff2e6":"#fbfbfa"; b.style.color=on?"#C14C23":"#2a2a2a"; });
+  wrap.value=0; render(); return wrap;
+}
+```
 
+```{ojs}
+sdaView = {
+  const O="#E78824",Od="#C14C23",G="#4D701F",ink="#2a2a2a";
+  const frames=[
+    {t:"Initialize from the cross-block SVD",
+     b:"Each component starts at the leading singular vectors of XᵀY — the ordinary (dense) PLS direction, the strongest covariance link between the variables and the class indicator, before any sparsity is imposed.",
+     m:"u,\\,v \\;\\leftarrow\\; \\text{top singular vectors of } X^{\\top}Y"},
+    {t:"Update the sparse X-loading u",
+     b:"Carry the current Y-score back onto X to get a fresh X-weight, soft-threshold it so only keepX variables survive, then renormalize. This single step is where variable selection happens.",
+     m:"u \\;=\\; \\text{normalize}\\big(\\,S_\\lambda(X^{\\top}t_Y)\\,\\big),\\qquad S_\\lambda(a)=\\operatorname{sign}(a)\\,(|a|-\\lambda)_+"},
+    {t:"Update the Y-loading v",
+     b:"Carry the new X-score onto Y and renormalize. The class (Y) side gets no penalty — every class column is allowed to contribute.",
+     m:"t_X = Xu,\\qquad v = \\text{normalize}\\big(Y^{\\top}t_X\\big)"},
+    {t:"Check convergence",
+     b:"Compare each loading to the previous pass. When both have essentially stopped moving (or a max-iteration cap is hit), the component is done.",
+     m:"\\max\\big(\\lVert u-u_{\\text{old}}\\rVert^2,\\ \\lVert v-v_{\\text{old}}\\rVert^2\\big) \\;<\\; \\text{tol}"},
+    {t:"Store scores, then deflate X",
+     b:"Save this component's scores and loadings, then regress X on its own score and subtract that rank-1 piece, so the next component is forced to find new structure. Y is left untouched — that is the discriminant (DA) mode.",
+     m:"p_X = \\frac{X^{\\top}t_X}{t_X^{\\top}t_X},\\qquad X \\leftarrow X - t_X\\,p_X^{\\top}"}
+  ];
+  const f=frames[sdaStep];
+  const card=html`<div style="border:2px solid #eee;border-top:5px solid ${O};border-radius:14px;padding:16px 22px;background:#fff;min-height:230px"></div>`;
+  card.append(html`<div style="font:800 21px inherit;color:${Od};margin-bottom:6px">${f.t}</div>`);
+  card.append(html`<div style="font:400 16px inherit;line-height:1.45;color:${ink};margin-bottom:16px">${f.b}</div>`);
+  const eq=html`<div style="text-align:center;font-size:19px;color:${ink}">${tex.block`${f.m}`}</div>`;
+  card.append(eq);
+  if(sdaStep===4) card.append(html`<div style="margin-top:14px;font:600 13px inherit;color:#777">↩ loop back to ① for the next component</div>`);
+  return card;
+}
+```
+-->
 
 
 
