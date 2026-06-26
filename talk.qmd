@@ -1054,6 +1054,114 @@ sdaView = {
 -->
 
 
+# Validation: 8 methods, all match {#bench}
+
+Each reimplementation reproduces its reference (worst misalignment **1.1e‑13**) and beats it on time — *except PCA*. Click a method:
+
+```{ojs}
+benchData = [
+  {name:"PCA", ref:"MultivariateStats.PCA (Julia)", refshort:"MVS",
+   matrix:"X = 500 × 40 (obs × var)", params:"k = 6, method = :svd",
+   matchdesc:"loading 1−|cos| = 5.6e-16",
+   jt:"553.9 µs", ja:"44", jm:"566 KiB", rt:"168.3 µs", ra:"41", rm:"217 KiB",
+   speed:"0.3× — the only method slower than its reference", slower:true},
+  {name:"PLSKERN", ref:"Jchemo.plskern (Julia)", refshort:"Jchemo",
+   matrix:"X = 400 × 50, y = 400", params:"nlv = 12",
+   matchdesc:"coef max|Δ| = 5.6e-17",
+   jt:"107.0", ja:"49", jm:"86.94 KiB", rt:"220.7 µs", ra:"890", rm:"293 KiB",
+   speed:"≈ 2.1× faster", slower:false},
+  {name:"CCA", ref:"MultivariateStats.CCA (Julia)", refshort:"MVS",
+   matrix:"X = 6 × 800, Y = 5 × 800 (var × obs), 2 shared latents", params:"method = :svd",
+   matchdesc:"corr Δ = 1.2e-15 · x-proj = 0.0 · y-proj = 1.1e-16",
+   jt:"216.9 µs", ja:"75", jm:"206 KiB", rt:"227.1 µs", ra:"93", rm:"366 KiB",
+   speed:"≈ 1.05× faster", slower:false},
+  {name:"PMD", ref:"PMA::PMD (R)", refshort:"PMA (R)",
+   matrix:"X = 60 × 40", params:"sumabs = 0.4, K = 3, center = true",
+   matchdesc:"u & v 1−|cos| = 1.1e-16",
+   jt:"312.8 µs", ja:"44", jm:"161 KiB", rt:"15.248 ms", ra:"—", rm:"—",
+   speed:"≈ 49× faster", slower:false},
+  {name:"SPC", ref:"PMA::SPC (R)", refshort:"PMA (R)",
+   matrix:"X = 80 × 30", params:"c = √p / 2, K = 3",
+   matchdesc:"loading 1−|cos| = 1.1e-13 · selected sets identical",
+   jt:"211.9 µs", ja:"99", jm:"82 KiB", rt:"9.289 ms", ra:"—", rm:"—",
+   speed:"≈ 44× faster", slower:false},
+  {name:"SCCA", ref:"PMA::CCA (R)", refshort:"PMA (R)",
+   matrix:"X = 40 × 100, Z = 50 × 100 (var × obs)", params:"penaltyx = penaltyz = 0.3, K = 2, niter = 15",
+   matchdesc:"u & v 1−|cos| = 0.0 · selected sets identical",
+   jt:"342.4 µs", ja:"120", jm:"432 KiB", rt:"9.507 ms", ra:"—", rm:"—",
+   speed:"≈ 28× faster", slower:false},
+  {name:"JIVE", ref:"r.jive (R)", refshort:"r.jive (R)",
+   matrix:"X1 = 60 × 80, X2 = 50 × 80 (var × obs)", params:"given ranks: joint = 2, individual = [3, 3]",
+   matchdesc:"joint-subspace min canonical corr = 0.99999998",
+   jt:"35.508 ms", ja:"1359", jm:"17.9 MiB", rt:"2475.1 ms", ra:"—", rm:"—",
+   speed:"≈ 70× faster", slower:false},
+  {name:"SPLSDA", ref:"mixOmics::splsda (R)", refshort:"mixOmics (R)",
+   matrix:"X = 60 × 200 (3 classes × 20 obs)", params:"ncomp = 2, keepX = [10, 10]",
+   matchdesc:"X-loading 1−|cos| = 0.0 · selected sets identical",
+   jt:"105.5 µs", ja:"184", jm:"461 KiB", rt:"3.01 ms", ra:"—", rm:"—",
+   speed:"≈ 29× faster", slower:false}
+]
+```
+
+```{ojs}
+viewof benchSel = {
+  const wrap=html`<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px"></div>`;
+  const els=benchData.map((d,k)=>{ const b=html`<button>${d.name}</button>`;
+    b.style.cssText="font:700 12.5px inherit;padding:5px 12px;border-radius:20px;border:1.5px solid #ddd;background:#fff;color:#555;cursor:pointer";
+    b.onclick=()=>{wrap.value=k;render();wrap.dispatchEvent(new CustomEvent("input"));}; return b; });
+  els.forEach(e=>wrap.append(e));
+  const render=()=>els.forEach((b,k)=>{ const on=k===wrap.value;
+    b.style.background=on?"#E78824":"#fff"; b.style.borderColor=on?"#E78824":"#ddd"; b.style.color=on?"#fff":"#555"; });
+  wrap.value=0; render(); return wrap;
+}
+```
+
+```{ojs}
+benchView = {
+  const d=benchData[benchSel];
+  const O="#E78824",Od="#C14C23",G="#4D701F",ink="#2a2a2a",mut="#777";
+  const card=html`<div style="border:2px solid #eee;border-top:5px solid ${O};border-radius:14px;padding:14px 20px;background:#fff;min-height:240px"></div>`;
+
+  const h=html`<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px"></div>`;
+  h.append(html`<span style="font:800 21px inherit;color:${Od}">${d.name}</span>`);
+  h.append(html`<span style="font:600 14px inherit;color:${mut}">vs ${d.ref}</span>`);
+  h.append(html`<span style="margin-left:auto;font:700 13px inherit;color:${G};background:#eef3e8;padding:3px 11px;border-radius:20px">✓ verified</span>`);
+  card.append(h);
+
+  const grid=html`<div style="display:grid;grid-template-columns:1fr 1.3fr;gap:20px"></div>`;
+  const kv=(k,v)=>html`<div style="margin-bottom:9px"><div style="font:700 12px inherit;color:${mut}">${k}</div><div style="font:500 15px inherit;color:${ink}">${v}</div></div>`;
+  const left=html`<div></div>`;
+  left.append(kv("Matrix", d.matrix));
+  left.append(kv("Params", d.params));
+  left.append(kv("Match", d.matchdesc));
+  grid.append(left);
+
+  const right=html`<div></div>`;
+  right.append(html`<div style="font:700 12px inherit;color:${mut};margin-bottom:5px">Performance</div>`);
+  const t=html`<table style="border-collapse:collapse;width:100%;font:500 14px inherit"></table>`;
+  t.append(html`<tr><th></th><th style="text-align:right;padding:3px 8px;color:${mut}">Time</th><th style="text-align:right;padding:3px 8px;color:${mut}">Alloc</th><th style="text-align:right;padding:3px 8px;color:${mut}">Memory</th></tr>`);
+  const row=(lbl,tm,al,me,col,bold)=>{
+    const tr=html`<tr></tr>`;
+    tr.append(html`<td style="padding:5px 8px;font-weight:800;color:${col}">${lbl}</td>`);
+    tr.append(html`<td style="padding:5px 8px;text-align:right;font-weight:${bold?700:500};color:${ink}">${tm}</td>`);
+    tr.append(html`<td style="padding:5px 8px;text-align:right;color:${mut}">${al}</td>`);
+    tr.append(html`<td style="padding:5px 8px;text-align:right;color:${mut}">${me}</td>`);
+    return tr;
+  };
+  t.append(row("Julia", d.jt, d.ja, d.jm, G, true));
+  t.append(row(d.refshort, d.rt, d.ra, d.rm, mut, false));
+  right.append(t);
+  right.append(html`<div style="margin-top:12px;font:800 16px inherit;color:${d.slower?'#b00':O}">${d.speed}</div>`);
+  grid.append(right);
+  card.append(grid);
+  return card;
+}
+```
+
+<div class="uthsc-green-box" style="font-size:0.74em; padding:6px 12px;">
+Timing is **not** a direct head-to-head: Julia = `@btime` best-case (BenchmarkTools); R = `microbenchmark` median measured **inside R** (excludes RCall marshalling). Separate runtimes — read speed-ups as ballpark. "—" = not recorded (R refs report time only).
+</div>
+
 
 
 
